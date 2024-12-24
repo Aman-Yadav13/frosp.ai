@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-name # Dynamically replaced by replId
+  labels:
+    app: service-name # Quote the value to ensure it's a string
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-name # Quote the value here too
+  template:
+    metadata:
+      labels:
+        app: service-name # Quote the value
+    spec:
+      volumes:
+        - name: workspace-volume
+          emptyDir: {}
+      initContainers:
+        - name: copy-s3-resources
+          image: amazon/aws-cli
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              aws s3 cp s3://repl/code/service-name/ /workspace/ --recursive &&
+              echo "Resources copied from S3";
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: AKIA2PC3OO5NICM52QN2
+            - name: AWS_SECRET_ACCESS_KEY
+              value: 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
+          volumeMounts:
+            - name: workspace-volume
+              mountPath: /workspace
+      containers:
+        - name: runner-service
+          image: amantests01/repl-runner-service:latest
+          ports:
+            - containerPort: 3001
+            - containerPort: 3000
+          env:
+            - name: REPL_ID
+              value: service-name
+          volumeMounts:
+            - name: workspace-volume
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: "1"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-name
+spec:
+  selector:
+    app: service-name
+  ports:
+    - protocol: TCP
+      name: ws
+      port: 3001
+      targetPort: 3001
+    - protocol: TCP
+      name: user
+      port: 3000
+      targetPort: 3000
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: service-name
+  namespace: default
+spec:
+  rules:
+    - host: ays-replit.com
+      http:
+        paths:
+          - path: "/{{replId}}"
+            pathType: Prefix
+            backend:
+              service:
+                name: service-name
+                port:
+                  number: 3001
+          - path: "/{{replId}}/user"
+            pathType: Prefix
+            backend:
+              service:
+                name: service-name
+                port:
+                  number: 3000

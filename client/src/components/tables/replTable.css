@@ -1,0 +1,15 @@
+::-webkit-scrollbar {
+  height: 1px;
+  width: 8px;
+
+  @apply bg-neutral-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white;
+  -webkit-border-radius: 0px;
+}
+
+::-webkit-scrollbar-corner {
+  @apply bg-white;
+}

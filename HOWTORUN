@@ -1,0 +1,20 @@
+1.  minikube delete -p repl-cluster
+2.  minikube start --nodes 1 -p repl-cluster --driver=docker
+3.  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+4.  kubectl get pods -n ingress-nginx
+5.  kubectl get services --namespace ingress-nginx
+6.  minikube status -p repl-cluster
+7.  kubectl get componentstatuses
+
+8.  minikube tunnel
+
+Note: NodePort Setup(Minikube doesn't allows ExternalIP Allocation to LoadBalancer Services):
+
+1.  kubectl expose service ingress-nginx-controller --type=NodePort --name=ingress-nginx-controller-nodeport --namespace=ingress-nginx
+2.  kubectl get svc ingress-nginx-controller-nodeport --namespace=ingress-nginx (get nodeport)
+    minikube -p repl-cluster ip (get ip)
+
+
+Helper Commands:
+1)  kubectl get deployments/ingress/services/pods -n default
+2)  kubectl delete deployment/ingress/service name -n default
