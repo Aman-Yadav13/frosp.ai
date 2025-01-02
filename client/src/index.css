@@ -78,5 +78,9 @@ body,
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  @apply bg-gray-900;
+  /* @apply bg-gray-900; */
+}
+
+.xterm-helpers {
+  @apply h-0 overflow-hidden;
 }

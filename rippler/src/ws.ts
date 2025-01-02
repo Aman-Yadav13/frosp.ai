@@ -1,31 +1,36 @@
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
-import { saveToS3 } from "./aws.ts";
-import { fetchDir, fetchFileContent, saveFile } from "./fs.ts";
-import { TerminalManager } from "./pty.ts";
+import { saveToS3 } from "./aws.js";
+import { fetchDir, fetchFileContent, saveFile } from "./fs.js";
+import { TerminalManager } from "./pty.js";
 
 const terminalManager = new TerminalManager();
 
 export function initWs(httpServer: HttpServer) {
+  console.log("REPL ID: ", process.env.REPL_ID);
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
     },
+    path: `/${process.env.REPL_ID}/socket.io/`,
   });
 
   io.on("connection", async (socket) => {
     // Auth checks should happen here
     const host = socket.handshake.headers.host;
     console.log(`host is ${host}`);
+    const urlPath = socket.handshake.url;
+    const replId = urlPath?.split("/")[1];
     // Split the host by '.' and take the first part as replId
-    const replId = host?.split(".")[0];
+    // const replId = host?.split(".")[0];
 
     if (!replId) {
       socket.disconnect();
       terminalManager.clear(socket.id);
       return;
     }
+    console.log(`Repl ID: ${replId}`);
 
     socket.emit("loaded", {
       rootContent: await fetchDir("/workspace", ""),

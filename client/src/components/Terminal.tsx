@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
 import { Terminal } from "xterm";
@@ -55,7 +56,12 @@ export const TerminalComponent = ({ socket }: { socket: Socket }) => {
 
   return (
     <div
-      style={{ width: "40vw", height: "400px", textAlign: "left" }}
+      style={{
+        width: "40vw",
+        height: "400px",
+        textAlign: "left",
+        overflow: "scroll",
+      }}
       ref={terminalRef}
     ></div>
   );

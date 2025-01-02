@@ -12,7 +12,7 @@ function App() {
         <ModalProvider />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/repl/:language" element={<ReplPage />} />
+          <Route path="/project/:userId/:projectId" element={<ReplPage />} />
         </Routes>
       </BrowserRouter>
     </>

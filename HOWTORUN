@@ -18,3 +18,50 @@ Note: NodePort Setup(Minikube doesn't allows ExternalIP Allocation to LoadBalanc
 Helper Commands:
 1)  kubectl get deployments/ingress/services/pods -n default
 2)  kubectl delete deployment/ingress/service name -n default
+
+DOCKER BUILD:
+1) docker build -t your-image-name .
+2) docker run -it your-image-name bash
+3) docker login
+4) docker tag your-image-name your-dockerhub-username/your-repo-name:v1.1
+5) docker push your-dockerhub-username/your-repo-name:v1.1
+
+
+1) TO CHECK TUNNEL: minikube service repl-676af7b42abde66d1db24db1
+2) kubectl logs -f repl-676af7b42abde66d1db24db1-5c8547b574-fd74f <podname>
+
+GCLOUD SETUP:
+gcloud auth login
+gcloud config set project <PROJECT_ID>
+gcloud services enable \
+    container.googleapis.com \
+    compute.googleapis.com \
+    cloudresourcemanager.googleapis.com
+
+gcloud container clusters create frosp-cluster \
+    --zone us-central1-a \
+    --num-nodes 1 \
+    --machine-type e2-small \
+    --cluster-version latest \
+    --enable-autorepair \
+    --no-enable-basic-auth \
+    --release-channel regular
+gcloud container clusters get-credentials frosp-cluster --zone us-central1-a
+kubectl get nodes
+
+    Update component:
+        1)gcloud components update
+        2)gcloud components list
+        3)gcloud components install gke-gcloud-auth-plugin
+
+    Ingress Controller Setup:
+        1)kubectl create namespace ingress-nginx
+        2)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml -n ingress-nginx
+        3)kubectl get pods -n ingress-nginx
+        
+Night time: 
+gcloud container clusters update frosp-cluster --zone us-central1-a --no-enable-autoscaling --node-pool frosp-medium-pool
+gcloud container clusters resize frosp-cluster --zone us-central1-a --node-pool frosp-medium-pool --num-nodes 0
+Working time: 
+gcloud container clusters update frosp-cluster --zone us-central1-a --enable-autoscaling --node-pool frosp-medium-pool --min-nodes 2 --max-nodes 3
+gcloud container clusters resize frosp-cluster --zone us-central1-a --node-pool frosp-medium-pool --num-nodes 2

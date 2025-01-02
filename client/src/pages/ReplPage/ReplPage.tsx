@@ -1,7 +1,7 @@
 import { Workspace } from "@/components/Workspace";
 import { Sidebar } from "@/components/sidebar";
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useSocket } from "@/hooks/useSocket";
 import {
@@ -13,37 +13,80 @@ import {
 import { Output } from "@/components/Output";
 import { TerminalComponent } from "@/components/Terminal";
 import { FileTree } from "@/components/external/file-tree";
+import { getK8sNodePorts, startK8sContainer } from "@/api/k8s";
+import { useContainer } from "@/hooks/useContainer";
 
 const ReplPage = () => {
-  const [searchParams] = useSearchParams();
+  const { userId, projectId } = useParams();
   const [podCreated, setPodCreated] = useState(false);
-  const { language } = useParams();
-  const replId = searchParams.get("replId") ?? "";
+  // const startContainer = useCallback(async () => {
+  //   try {
+  //     const initialTest = await getK8sNodePorts(`repl-${projectId}`);
+  //     if (initialTest.status === 500) {
+  //       const startResponse = await startK8sContainer({
+  //         userId,
+  //         replId: projectId,
+  //       });
+  //       console.log("Start Response: ", startResponse);
+
+  //       if (startResponse.status === 200) {
+  //         const nodePortsResponse = await getK8sNodePorts(`repl-${projectId}`);
+  //         console.log("NodePorts Response", nodePortsResponse);
+  //         if (nodePortsResponse.status === 200) {
+  //           setPodCreated(true);
+  //           state.setUserNodePort(nodePortsResponse.data.ports[1].nodePort);
+  //           state.setWsNodePort(nodePortsResponse.data.ports[0].nodePort);
+  //         }
+  //         return;
+  //       }
+  //     } else if (initialTest.status === 200) {
+  //       // console.log("Initial test true: ", initialTest);
+  //       state.setUserNodePort(initialTest.data.ports[1].nodePort);
+  //       state.setWsNodePort(initialTest.data.ports[0].nodePort);
+  //       setPodCreated(true);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }, [projectId]);
+
+  const startContainer = useCallback(async () => {
+    try {
+      const startResponse = await startK8sContainer({
+        userId,
+        replId: projectId,
+      });
+      setPodCreated(true);
+      return;
+    } catch (e) {
+      console.log(e);
+    }
+  }, [projectId]);
 
   useEffect(() => {
-    if (replId) {
-      axios
-        .post(`http://localhost:3002/start`, { replId })
-        .then(() => setPodCreated(true))
-        .catch((err) => console.log(err));
+    if (projectId) {
+      startContainer();
     }
-  }, []);
+  }, [startContainer]);
 
-  // if (!podCreated) {
-  //   return <>Booting...</>;
-  // }
+  if (!podCreated) {
+    return <>Booting...</>;
+  }
   return <CodingPagePodCreated />;
 };
 
 const CodingPagePodCreated = () => {
   const contentRef = React.createRef<HTMLDivElement>();
-  const [searchParams] = useSearchParams();
-  const replId = searchParams.get("replId") ?? "";
+  const { projectId } = useParams();
   const [loaded, setLoaded] = useState(false);
-  const socket = useSocket(replId);
+  const socket = useSocket(projectId!);
   const [fileStructure, setFileStructure] = useState<RemoteFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [showOutput, setShowOutput] = useState(false);
+
+  // if (!socket || !socket.connected) {
+  //   return null;
+  // }
 
   useEffect(() => {
     if (socket) {
@@ -87,7 +130,7 @@ const CodingPagePodCreated = () => {
   }, [selectedFile]);
 
   return (
-    <div className="h-full bg-gray-900 flex w-full overflow-hidden">
+    <div className="h-full flex w-full overflow-hidden">
       <Sidebar contentRef={contentRef}>
         <FileTree
           rootDir={rootDir}
@@ -95,11 +138,17 @@ const CodingPagePodCreated = () => {
           onSelect={onSelect}
         />
       </Sidebar>
-      <div ref={contentRef} className="bg-gray-800 flex-1 flex w-full h-full">
-        <Workspace socket={socket!} selectedFile={selectedFile} />
-        <div className="w-[40%] flex flex-col flex-1">
-          {showOutput && <Output />}
-          <TerminalComponent socket={socket!} />
+      <div ref={contentRef} className="flex-1 flex w-full h-full">
+        <Workspace
+          socket={socket!}
+          selectedFile={selectedFile}
+          onSelect={onSelect}
+          files={fileStructure}
+        />
+        <div className="w-[40%] flex-1">
+          {/* {showOutput && <Output />} */}
+          <Output />
+          {socket && socket.connected && <TerminalComponent socket={socket!} />}
         </div>
       </div>
     </div>

@@ -1,9 +1,11 @@
-import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 
 export const Output = () => {
-  const [searchParams] = useSearchParams();
-  const replId = searchParams.get("replId") ?? "";
-  const INSTANCE_URI = `http://localhost:3003`;
+  const { projectId } = useParams();
+  const INSTANCE_URI = `http://frosp-rippler.duckdns.org/${projectId}/user/`;
+
+  // useEffect(() => {});
 
   return (
     <div style={{ height: "40vh", background: "white" }}>

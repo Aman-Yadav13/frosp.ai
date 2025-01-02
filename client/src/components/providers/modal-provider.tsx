@@ -7,6 +7,7 @@ import { RegisterModal } from "../models/register-modal";
 import { ResetPasswordModal } from "../models/reset-password-modal";
 import { ChangeAccountDetailsModal } from "../models/change-account-details";
 import { CreateProject } from "../models/create-project";
+import { InspectProjectModal } from "../models/inspect-project-modal";
 
 const ModalProvider = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -28,6 +29,7 @@ const ModalProvider = () => {
           <ResetPasswordModal />
           <ChangeAccountDetailsModal />
           <CreateProject />
+          <InspectProjectModal />
         </div>
       </AnimatePresence>
     </>

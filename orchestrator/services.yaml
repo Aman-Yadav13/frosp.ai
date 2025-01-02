@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: service-name # Dynamically replaced by replId
+  name: service-name
   labels:
-    app: service-name # Quote the value to ensure it's a string
+    app: service-name
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: service-name # Quote the value here too
+      app: service-name
   template:
     metadata:
       labels:
-        app: service-name # Quote the value
+        app: service-name
     spec:
       volumes:
         - name: workspace-volume
@@ -23,19 +23,25 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - >
-              aws s3 cp s3://repl/code/service-name/ /workspace/ --recursive &&
+              aws s3 cp s3://fixero-repl/code/svc-name/ /workspace/ --recursive &&
               echo "Resources copied from S3";
           env:
             - name: AWS_ACCESS_KEY_ID
-              value: AKIA2PC3OO5NICM52QN2
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
-              value: CD+IofMODsyvsMR8ETnrTlnKhoveqTtrJw4iUnr1
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
           volumeMounts:
             - name: workspace-volume
               mountPath: /workspace
       containers:
-        - name: runner-service
-          image: amantests01/repl-runner-service:latest
+        - name: rippler-service
+          image: amantests01/repl-runner-service:3.0
           ports:
             - containerPort: 3001
             - containerPort: 3000
@@ -47,8 +53,8 @@ spec:
               mountPath: /workspace
           resources:
             requests:
-              cpu: "1"
-              memory: "1Gi"
+              cpu: "0.5"
+              memory: "512Mi"
             limits:
               cpu: "1"
               memory: "1Gi"
@@ -69,29 +75,36 @@ spec:
       name: user
       port: 3000
       targetPort: 3000
-  type: NodePort
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: service-name
-  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "service-name"
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
-    - host: ays-replit.com
+    - host: frosp-rippler.duckdns.org
       http:
         paths:
-          - path: "/{{replId}}"
+          # WebSocket path (no rewrite)
+          - path: /{{replId}}/socket.io/
             pathType: Prefix
             backend:
               service:
                 name: service-name
                 port:
                   number: 3001
-          - path: "/{{replId}}/user"
-            pathType: Prefix
+          - path: /([^/]+)/user(/|$)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: service-name
                 port:
                   number: 3000
+            # nginx.ingress.kubernetes.io/rewrite-target: /$2

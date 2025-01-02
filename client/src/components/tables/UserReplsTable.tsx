@@ -42,7 +42,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
-import { deleteReplByReplid, getReplsByUserId } from "@/api/repl";
+import {
+  deleteReplByReplid,
+  getReplByReplid,
+  getReplsByUserId,
+} from "@/api/repl";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -74,7 +78,7 @@ export const UserReplsTable = ({
   repls,
   setUserRepls,
 }: UserReplsTableProps) => {
-  const { onOpen } = useModal((state) => state);
+  const { onOpen, setData } = useModal((state) => state);
   const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -115,9 +119,16 @@ export const UserReplsTable = ({
     }
   };
 
-  const handleProjectInspectClick = () => {
-    //TODO: Set current project information to display in modal.
-    onOpen("InspectProject");
+  const handleProjectInspectClick = async (_id: string) => {
+    try {
+      const resp = await getReplByReplid(_id);
+      setData(resp.repl);
+      setTimeout(() => {
+        onOpen("InspectProject");
+      }, 200);
+    } catch (error) {
+      toast.error("Unable to inspect the project. Try again later.");
+    }
   };
 
   const columns: ColumnDef<Repl>[] = [
@@ -198,7 +209,9 @@ export const UserReplsTable = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-neutral-700">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={handleProjectInspectClick}>
+                <DropdownMenuItem
+                  onClick={() => handleProjectInspectClick(_id)}
+                >
                   Inspect
                 </DropdownMenuItem>
                 <DropdownMenuItem

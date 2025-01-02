@@ -1,5 +1,6 @@
 //@ts-nocheck
 import { fork, IPty } from "node-pty";
+import path from "path";
 
 const SHELL = "bash";
 
