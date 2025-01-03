@@ -15,6 +15,7 @@ import { TerminalComponent } from "@/components/Terminal";
 import { FileTree } from "@/components/external/file-tree";
 import { getK8sNodePorts, startK8sContainer } from "@/api/k8s";
 import { useContainer } from "@/hooks/useContainer";
+import { WorkspaceToolsComponent } from "@/components/WorkspaceToolsComponent";
 
 const ReplPage = () => {
   const { userId, projectId } = useParams();
@@ -139,16 +140,22 @@ const CodingPagePodCreated = () => {
         />
       </Sidebar>
       <div ref={contentRef} className="flex-1 flex w-full h-full">
-        <Workspace
-          socket={socket!}
-          selectedFile={selectedFile}
-          onSelect={onSelect}
-          files={fileStructure}
-        />
-        <div className="w-[40%] flex-1">
-          {/* {showOutput && <Output />} */}
-          <Output />
-          {socket && socket.connected && <TerminalComponent socket={socket!} />}
+        <div className="flex flex-col w-full h-full">
+          <WorkspaceToolsComponent setShowOutput={setShowOutput} />
+          <div className="flex-1 w-full h-full flex">
+            <Workspace
+              socket={socket!}
+              selectedFile={selectedFile}
+              onSelect={onSelect}
+              files={fileStructure}
+            />
+            <div className="w-[40%] flex-1 flex flex-col gap-0 h-full">
+              {showOutput && <Output />}
+              {socket && socket.connected && (
+                <TerminalComponent showOutput={showOutput} socket={socket!} />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -88,8 +88,9 @@ export const Sidebar = ({
     <>
       <aside
         className={cn(
-          "group/sidebar h-full bg-gray-950 overflow-y-auto relative flex w-60 flex-col z-[99999]",
-          isResetting && "transition-all ease-in-out duration-300"
+          "group/sidebar h-full bg-gray-950 overflow-y-auto relative flex w-60 flex-col z-[99999]  min-w-[220px]",
+          isResetting && "transition-all ease-in-out duration-300",
+          isCollapsed && "min-w-0 w-0"
         )}
         ref={sidebarRef}
       >

@@ -5,10 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 
 export const InspectProjectModal = () => {
-  const { data } = useModal();
+  const { data, onClose } = useModal();
   const { userInfo } = useUser();
   const navigate = useNavigate();
   const handleOpenProject = () => {
+    onClose();
     navigate(`/project/${userInfo._id}/${data._id}`);
   };
 

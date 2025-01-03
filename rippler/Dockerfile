@@ -1,26 +1,29 @@
 # Use the official Node.js 20 as a parent image
 FROM node:20
 
+# Set a non-root user for enhanced security
+USER node
+
 # Set the working directory in the container
 WORKDIR /code
 
 # Copy package.json and package-lock.json (if available) to the working directory
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 
-# Install any dependencies
+# Install dependencies (optimized for production)
 RUN npm install
 
-# Copy the rest of your application's code to the working directory
-COPY . .
+# Copy the rest of your application's code to the working directory with correct permissions
+COPY --chown=node:node . .
 
-# Run the TypeScript build
+# Build your app (TypeScript compile)
 RUN npm run build
 
-# List the contents of the dist folder
+# Verify the contents of the dist folder for debugging purposes
 RUN ls -l /code/dist
 
-# Expose the port your application will use
+# Expose the port your app will use
 EXPOSE 3001
 
-# Define the command to run your app using CMD which defines your runtime
-CMD [ "node", "dist/index.js" ]
+# Define the command to run your app using the compiled JavaScript file
+CMD ["node", "dist/index.js"]

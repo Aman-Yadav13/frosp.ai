@@ -14,7 +14,13 @@ export const Workspace = ({
   files: RemoteFile[];
 }) => {
   if (!selectedFile) {
-    return null;
+    return (
+      <div className="flex-1 w-[60%] flex items-center justify-center border-r border-r-slate-800">
+        <h1 className="text-2xl text-gray-400">
+          Select a file to start coding
+        </h1>
+      </div>
+    );
   }
 
   const code = selectedFile.content;

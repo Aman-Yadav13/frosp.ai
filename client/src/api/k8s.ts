@@ -4,9 +4,13 @@ export const startK8sContainer = async (payload: {
   replId: string | undefined;
   userId: string | undefined;
 }) => {
-  const response = await axios.post(`http://localhost:3002/start`, payload, {
-    validateStatus: () => true, // Accept all HTTP status codes as valid
-  });
+  const response = await axios.post(
+    `http://localhost:3002/api/v1/init/start`,
+    payload,
+    {
+      validateStatus: () => true, // Accept all HTTP status codes as valid
+    }
+  );
   console.log(response);
   return response;
 };

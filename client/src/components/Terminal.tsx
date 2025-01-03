@@ -18,7 +18,13 @@ const OPTIONS_TERM = {
     background: "black",
   },
 };
-export const TerminalComponent = ({ socket }: { socket: Socket }) => {
+export const TerminalComponent = ({
+  socket,
+  showOutput,
+}: {
+  socket: Socket;
+  showOutput: boolean;
+}) => {
   const terminalRef = useRef();
 
   useEffect(() => {
@@ -56,12 +62,7 @@ export const TerminalComponent = ({ socket }: { socket: Socket }) => {
 
   return (
     <div
-      style={{
-        width: "40vw",
-        height: "400px",
-        textAlign: "left",
-        overflow: "scroll",
-      }}
+      className="h-full overflow-scroll text-left w-full ml-1"
       ref={terminalRef}
     ></div>
   );
