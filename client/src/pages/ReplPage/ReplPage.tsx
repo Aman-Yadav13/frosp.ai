@@ -92,6 +92,7 @@ const CodingPagePodCreated = () => {
   useEffect(() => {
     if (socket) {
       socket.on("loaded", ({ rootContent }: { rootContent: RemoteFile[] }) => {
+        console.log("Root content: ", rootContent);
         setLoaded(true);
         setFileStructure(rootContent);
       });

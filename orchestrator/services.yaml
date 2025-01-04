@@ -80,7 +80,7 @@ spec:
               mountPath: /workspace
       containers:
         - name: rippler-service
-          image: amantests01/rippler-service:0.0.2
+          image: amantests01/rippler-service:0.0.7
           ports:
             - containerPort: 3000
             - containerPort: 3001
@@ -95,6 +95,51 @@ spec:
           env:
             - name: REPL_ID
               value: service-name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: CONNECTION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: CONNECTION_URL
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: S3_ENDPOINT
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: S3_BUCKET
+            - name: REFRESH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: REFRESH_TOKEN_SECRET
+            - name: REFRESH_TOKEN_EXPIRY
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: REFRESH_TOKEN_EXPIRY
+            - name: ACCESS_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: ACCESS_TOKEN_SECRET
+            - name: ACCESS_TOKEN_EXPIRY
+              valueFrom:
+                secretKeyRef:
+                  name: unified-secrets
+                  key: ACCESS_TOKEN_EXPIRY
           volumeMounts:
             - name: workspace-volume
               mountPath: /workspace
