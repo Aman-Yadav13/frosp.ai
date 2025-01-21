@@ -16,6 +16,7 @@ import { FileTree } from "@/components/external/file-tree";
 import { getK8sNodePorts, startK8sContainer } from "@/api/k8s";
 import { useContainer } from "@/hooks/useContainer";
 import { WorkspaceToolsComponent } from "@/components/WorkspaceToolsComponent";
+import FileEditor from "@/components/ui/file-editor";
 
 const ReplPage = () => {
   const { userId, projectId } = useParams();
@@ -133,7 +134,7 @@ const CodingPagePodCreated = () => {
 
   return (
     <div className="h-full flex w-full overflow-hidden">
-      <Sidebar contentRef={contentRef}>
+      <Sidebar projectName = {projectId.name} contentRef={contentRef}>
         <FileTree
           rootDir={rootDir}
           selectedFile={selectedFile}
