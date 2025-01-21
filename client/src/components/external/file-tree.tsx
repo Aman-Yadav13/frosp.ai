@@ -9,19 +9,15 @@ interface FileTreeProps {
   rootDir: Directory;
   selectedFile: File | Directory | undefined;
   onSelect: (file: File | Directory) => void;
-  onDelete: (file: File | Directory) => void;
+  onDelete?: (file: File | Directory) => void;
 }
 
 export const FileTree = (props: FileTreeProps) => {
   const [selectedDirectory, setSelectedDirectory] = useState<string>("/");
-  
-  
+
   return (
     <div>
-      <FileEditor
-        selectedFile={props.selectedFile}
-        path={selectedDirectory}
-      />
+      <FileEditor selectedFile={props.selectedFile} path={selectedDirectory} />
       <SubTree
         directory={props.rootDir}
         {...props}
@@ -78,7 +74,9 @@ const FileDiv = (props: {
   return (
     <div
       className={cn(
-        `flex items-center justify-between hover:cursor-pointer hover:bg-[#242424] pl-${depth * 16}`,
+        `flex items-center justify-between hover:cursor-pointer hover:bg-[#242424] pl-${
+          depth * 16
+        }`,
         isSelected ? "bg-[#242424]" : "bg-transparent"
       )}
       onClick={onClick}
@@ -100,7 +98,9 @@ const DirDiv = (props: {
 }) => {
   const { directory, selectedFile, onSelect, setSelectedDirectory } = props;
 
-  const isInitiallyOpen = selectedFile ? isChildSelected(directory, selectedFile) : false;
+  const isInitiallyOpen = selectedFile
+    ? isChildSelected(directory, selectedFile)
+    : false;
   const [open, setOpen] = useState(isInitiallyOpen);
 
   const isSelectedOrOpen = selectedFile?.id === directory.id || open;
@@ -123,17 +123,26 @@ const DirDiv = (props: {
       {/* Directory Item */}
       <div
         className={cn(
-          `flex items-center justify-between hover:cursor-pointer pl-${directory.depth * 16}`,
+          `flex items-center justify-between hover:cursor-pointer pl-${
+            directory.depth * 16
+          }`,
           isSelectedOrOpen ? "bg-[#242424]" : "bg-transparent"
         )}
         onClick={handleClick}
       >
         <div className="flex items-center">
-          <FileIcon name={open ? "openDirectory" : "closedDirectory"} extension="" />
+          <FileIcon
+            name={open ? "openDirectory" : "closedDirectory"}
+            extension=""
+          />
           <span style={{ marginLeft: 8 }}>{directory.name}</span>
         </div>
         <span className="ml-auto" onClick={handleArrowClick}>
-          {open ? <RiArrowDropDownLine size={24} /> : <RiArrowDropLeftLine size={24} />}
+          {open ? (
+            <RiArrowDropDownLine size={24} />
+          ) : (
+            <RiArrowDropLeftLine size={24} />
+          )}
         </span>
       </div>
 
@@ -152,8 +161,10 @@ const DirDiv = (props: {
   );
 };
 
-
-const isChildSelected = (directory: Directory, selectedFile: File | Directory): boolean => {
+const isChildSelected = (
+  directory: Directory,
+  selectedFile: File | Directory
+): boolean => {
   let result = false;
 
   const checkChild = (dir: Directory, file: File | Directory) => {
@@ -180,5 +191,3 @@ const FileIcon = ({
     <span className="flex w-8 h-8 justify-center items-center">{icon}</span>
   );
 };
-
-

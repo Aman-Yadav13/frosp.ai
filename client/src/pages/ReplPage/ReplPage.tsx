@@ -1,8 +1,7 @@
 import { Workspace } from "@/components/Workspace";
 import { Sidebar } from "@/components/sidebar";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { useParams } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
 import {
   buildFileTree,
@@ -13,48 +12,25 @@ import {
 import { Output } from "@/components/Output";
 import { TerminalComponent } from "@/components/Terminal";
 import { FileTree } from "@/components/external/file-tree";
-import { getK8sNodePorts, startK8sContainer } from "@/api/k8s";
-import { useContainer } from "@/hooks/useContainer";
+import { startK8sContainer } from "@/api/k8s";
 import { WorkspaceToolsComponent } from "@/components/WorkspaceToolsComponent";
-import FileEditor from "@/components/ui/file-editor";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { CodingPageSkeleton } from "@/components/skeletons/CodingPageSkeleton";
+import { FooterTools } from "@/components/FooterTools";
+import { getFTL } from "@/api/repl";
+import { useBackSocket } from "@/hooks/useBackSocket";
 
 const ReplPage = () => {
   const { userId, projectId } = useParams();
   const [podCreated, setPodCreated] = useState(false);
-  // const startContainer = useCallback(async () => {
-  //   try {
-  //     const initialTest = await getK8sNodePorts(`repl-${projectId}`);
-  //     if (initialTest.status === 500) {
-  //       const startResponse = await startK8sContainer({
-  //         userId,
-  //         replId: projectId,
-  //       });
-  //       console.log("Start Response: ", startResponse);
-
-  //       if (startResponse.status === 200) {
-  //         const nodePortsResponse = await getK8sNodePorts(`repl-${projectId}`);
-  //         console.log("NodePorts Response", nodePortsResponse);
-  //         if (nodePortsResponse.status === 200) {
-  //           setPodCreated(true);
-  //           state.setUserNodePort(nodePortsResponse.data.ports[1].nodePort);
-  //           state.setWsNodePort(nodePortsResponse.data.ports[0].nodePort);
-  //         }
-  //         return;
-  //       }
-  //     } else if (initialTest.status === 200) {
-  //       // console.log("Initial test true: ", initialTest);
-  //       state.setUserNodePort(initialTest.data.ports[1].nodePort);
-  //       state.setWsNodePort(initialTest.data.ports[0].nodePort);
-  //       setPodCreated(true);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }, [projectId]);
 
   const startContainer = useCallback(async () => {
     try {
-      const startResponse = await startK8sContainer({
+      await startK8sContainer({
         userId,
         replId: projectId,
       });
@@ -70,26 +46,40 @@ const ReplPage = () => {
       startContainer();
     }
   }, [startContainer]);
-
   if (!podCreated) {
-    return <>Booting...</>;
+    return <CodingPageSkeleton />;
   }
+
   return <CodingPagePodCreated />;
 };
 
 const CodingPagePodCreated = () => {
-  const contentRef = React.createRef<HTMLDivElement>();
   const { projectId } = useParams();
+  const contentRef = React.createRef<HTMLDivElement>();
   const [loaded, setLoaded] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const backSocket = useBackSocket(projectId!);
   const socket = useSocket(projectId!);
   const [fileStructure, setFileStructure] = useState<RemoteFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [showOutput, setShowOutput] = useState(false);
-
   // if (!socket || !socket.connected) {
   //   return null;
   // }
 
+  const getFreeTimeLeft = useCallback(async () => {
+    try {
+      const res = await getFTL(projectId!);
+      setTimeRemaining(res.timeLeft);
+    } catch (e) {
+      //Handle errors;
+      console.log(e);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    getFreeTimeLeft();
+  }, [getFreeTimeLeft]);
   useEffect(() => {
     if (socket) {
       socket.on("loaded", ({ rootContent }: { rootContent: RemoteFile[] }) => {
@@ -119,9 +109,9 @@ const CodingPagePodCreated = () => {
     }
   };
 
-  // if (!loaded) {
-  //   return "Loading...";
-  // }
+  if (!loaded) {
+    // return <CodingPageSkeleton />;
+  }
   const rootDir = useMemo(() => {
     return buildFileTree(fileStructure);
   }, [fileStructure]);
@@ -133,33 +123,67 @@ const CodingPagePodCreated = () => {
   }, [selectedFile]);
 
   return (
-    <div className="h-full flex w-full overflow-hidden">
-      <Sidebar projectName = {projectId.name} contentRef={contentRef}>
-        <FileTree
-          rootDir={rootDir}
-          selectedFile={selectedFile}
-          onSelect={onSelect}
-        />
-      </Sidebar>
-      <div ref={contentRef} className="flex-1 flex w-full h-full">
-        <div className="flex flex-col w-full h-full">
-          <WorkspaceToolsComponent setShowOutput={setShowOutput} />
-          <div className="flex-1 w-full h-full flex">
-            <Workspace
-              socket={socket!}
-              selectedFile={selectedFile}
-              onSelect={onSelect}
-              files={fileStructure}
+    <div className="h-full w-full overflow-hidden flex flex-col">
+      <div
+        className="w-full flex overflow-hidden border-b border-zinc-800"
+        style={{ height: `calc(100% - 20px)` }}
+      >
+        <Sidebar contentRef={contentRef} projectName={""}>
+          <FileTree
+            rootDir={rootDir}
+            selectedFile={selectedFile}
+            onSelect={onSelect}
+          />
+        </Sidebar>
+        <div ref={contentRef} className="flex-1 flex w-full h-full">
+          <div className="flex flex-col w-full h-full">
+            <WorkspaceToolsComponent
+              setShowOutput={setShowOutput}
+              timeRemaining={timeRemaining}
+              setTimeRemaining={setTimeRemaining}
+              backSocket={backSocket}
+              showOutput={showOutput}
             />
-            <div className="w-[40%] flex-1 flex flex-col gap-0 h-full">
-              {showOutput && <Output />}
-              {socket && socket.connected && (
-                <TerminalComponent showOutput={showOutput} socket={socket!} />
-              )}
-            </div>
+            <ResizablePanelGroup
+              direction="horizontal"
+              className="flex-1 w-full h-full flex"
+            >
+              <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
+                <Workspace
+                  socket={socket!}
+                  selectedFile={selectedFile}
+                  onSelect={onSelect}
+                  files={fileStructure}
+                />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
+                <ResizablePanelGroup direction="vertical">
+                  <div className="flex-1 flex flex-col gap-0 h-full">
+                    {showOutput && (
+                      <>
+                        <ResizablePanel>
+                          <Output />
+                        </ResizablePanel>
+                        <ResizableHandle />
+                      </>
+                    )}
+                    {socket && socket.connected && (
+                      <ResizablePanel>
+                        <TerminalComponent
+                          showOutput={showOutput}
+                          socket={socket!}
+                        />
+                      </ResizablePanel>
+                    )}
+                  </div>
+                </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </div>
         </div>
       </div>
+      <FooterTools socket={socket!} />
     </div>
   );
 };

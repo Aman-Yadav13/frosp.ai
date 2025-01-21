@@ -72,7 +72,7 @@ export const TerminalComponent = ({
 
   return (
     <div
-      className="h-full overflow-scroll text-left w-full ml-1"
+      className="h-full overflow-scroll text-left w-full ml-1 overflow-x-visible"
       ref={terminalRef}
     ></div>
   );

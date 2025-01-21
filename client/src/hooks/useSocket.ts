@@ -7,7 +7,6 @@ export const useSocket = (replId: string) => {
     const newSocket = io(`ws://frosp-rippler.duckdns.org/`, {
       path: `/repl-${replId}/socket.io/`,
     });
-    console.log(newSocket);
     setSocket(newSocket);
 
     return () => {

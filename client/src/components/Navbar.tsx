@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { useUser } from "@/hooks/useUser";
 import { UserComponent } from "./user-component";
 import { Skeleton } from "./ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   isLoginProcessed: boolean;
@@ -10,6 +11,7 @@ interface NavbarProps {
 
 export const Navbar = ({ isLoginProcessed }: NavbarProps) => {
   const state = useUser((state) => state);
+  const navigate = useNavigate();
   const { onOpen } = useModal();
   const handleLoginModalOpen = () => {
     onOpen("Login");
@@ -22,7 +24,13 @@ export const Navbar = ({ isLoginProcessed }: NavbarProps) => {
     <>
       <div className="h-[58px] bg-gray-800 flex items-center justify-center px-4 py-1 border-b border-b-gray-600">
         <div className="flex items-center justify-between w-full">
-          <div>{/* Logo */}</div>
+          <div
+            className="h-12 w-16 object-cover -mt-1 cursor-pointer overflow-hidden select-none"
+            role="button"
+            onClick={() => navigate("/")}
+          >
+            <img src="/frospai.png" />
+          </div>
           <div className="self-center">
             {!isLoginProcessed ? (
               <LoginSkeleton />

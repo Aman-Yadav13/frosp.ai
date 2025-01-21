@@ -22,8 +22,10 @@ import {
 import { useModal } from "@/hooks/useModal";
 import { toast } from "sonner";
 import { logoutUser } from "@/api/user";
+import { useNavigate } from "react-router-dom";
 
 export const UserComponent = () => {
+  const navigate = useNavigate();
   const state = useUser((state) => state);
   const { onOpen } = useModal((state) => state);
   const [initial, setInitial] = useState("");
@@ -61,6 +63,11 @@ export const UserComponent = () => {
     }
   };
 
+  const onManageProjectsClick = () => {
+    setDropdownOpen(false);
+    navigate("/projects");
+  };
+
   return (
     <>
       <DropdownMenu
@@ -76,6 +83,12 @@ export const UserComponent = () => {
           <DropdownMenuLabel>
             Welcome {state.userInfo.fullName}
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={onManageProjectsClick}>
+              Manage Projects
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={onResetPasswordClick}>

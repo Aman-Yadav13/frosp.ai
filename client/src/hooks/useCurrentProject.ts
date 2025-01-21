@@ -1,15 +1,11 @@
 import { create } from "zustand";
 
 interface ProjectStore {
-  name: string;
-  language: string;
-  stack?: string;
-  setProject: (name: string, language: string, stack?: string) => void;
+  project: any;
+  setProject: (project: any) => void;
 }
 
-export const useProject = create<ProjectStore>((set) => ({
-  name: "",
-  language: "",
-  stack: "",
-  setProject: (name, language, stack) => set({ name, language, stack }),
+export const useCurrentProject = create<ProjectStore>((set) => ({
+  project: null,
+  setProject: (project) => set({ project }),
 }));

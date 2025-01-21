@@ -1,12 +1,17 @@
-import { useSocket } from '@/hooks/useSocket';
-import React, { useEffect } from 'react';
-import { AiOutlineFileAdd, AiOutlineFolderAdd, AiOutlineEdit } from 'react-icons/ai';
-import { useParams } from 'react-router-dom';
+import { useSocket } from "@/hooks/useSocket";
+import React, { useEffect } from "react";
+import {
+  AiOutlineFileAdd,
+  AiOutlineFolderAdd,
+  AiOutlineEdit,
+} from "react-icons/ai";
+import { useParams } from "react-router-dom";
+import { Directory } from "../external/utils/file-manager";
 
 interface FileEditorProps {
   selectedFile: File | Directory | undefined;
   path: string | undefined;
-  filePath: string | undefined;
+  filePath?: string | undefined;
 }
 
 export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
@@ -16,13 +21,19 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Delete" && ((selectedFile || !path) || (!selectedFile && path))) { 
+      if (
+        event.key === "Delete" &&
+        (selectedFile || !path || (!selectedFile && path))
+      ) {
         deleteEntry();
       }
-      if (event.key === "F2" && ((selectedFile || !path) || (!selectedFile && path))) { 
+      if (
+        event.key === "F2" &&
+        (selectedFile || !path || (!selectedFile && path))
+      ) {
         renameEntry();
-      };
-    }
+      }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
 
@@ -30,8 +41,6 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedFile, path]);
-
-
 
   const addNewFile = () => {
     const dir = path || "/";
@@ -81,7 +90,7 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
       return;
     }
 
-    let entryPath = '';
+    let entryPath = "";
     console.log("Selected File in delete:", selectedFile);
     console.log("Selected Directory in delete: ", path);
 
@@ -120,7 +129,7 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
       return;
     }
 
-    const newPath = oldPath.replace(/[^/]+$/, newName); 
+    const newPath = oldPath.replace(/[^/]+$/, newName);
     socket?.emit("renameEntry", { oldPath, newPath }, (response: any) => {
       if (response.success) {
         alert("Entry renamed successfully!");
@@ -132,10 +141,16 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
 
   return (
     <div>
-      <button onClick={addNewFile}><AiOutlineFileAdd /></button>
-      <button onClick={addNewDirectory}><AiOutlineFolderAdd /></button>
-      <button onClick={renameEntry}><AiOutlineEdit /></button> {/* Add rename button */}
-
+      <button onClick={addNewFile}>
+        <AiOutlineFileAdd />
+      </button>
+      <button onClick={addNewDirectory}>
+        <AiOutlineFolderAdd />
+      </button>
+      <button onClick={renameEntry}>
+        <AiOutlineEdit />
+      </button>{" "}
+      {/* Add rename button */}
     </div>
   );
 };
