@@ -54,6 +54,44 @@ export async function copyS3Folder(
   }
 }
 
+export async function deleteS3Folder(
+  prefix: string,
+  continuationToken?: string
+): Promise<void> {
+  try {
+    const listParams = {
+      Bucket: process.env.S3_BUCKET ?? "",
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    };
+
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+    if (!listedObjects.Contents || listedObjects.Contents.length === 0) return;
+
+    await Promise.all(
+      listedObjects.Contents.map(async (object) => {
+        if (!object.Key) return;
+        const deleteParams = {
+          Bucket: process.env.S3_BUCKET ?? "",
+          Key: object.Key,
+        };
+
+        console.log(deleteParams);
+
+        await s3.deleteObject(deleteParams).promise();
+        console.log(`Deleted ${object.Key}`);
+      })
+    );
+
+    if (listedObjects.IsTruncated) {
+      listParams.ContinuationToken = listedObjects.NextContinuationToken;
+      await deleteS3Folder(prefix, listParams.ContinuationToken);
+    }
+  } catch (error) {
+    console.error("Error deleting folder:", error);
+  }
+}
+
 export const saveToS3 = async (
   key: string,
   filePath: string,

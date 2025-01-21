@@ -1,24 +1,29 @@
-# Use the official Node.js 14 as a parent image
+# Use the official Node.js 20 as a parent image
 FROM node:20
+
+# Set a non-root user for enhanced security
+USER node
 
 # Set the working directory in the container
 WORKDIR /code
 
 # Copy package.json and package-lock.json (if available) to the working directory
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 
-# Install any dependencies
+# Install dependencies (optimized for production)
 RUN npm install
 
-# Copy the rest of your application's code to the working directory
-COPY . .
+# Copy the rest of your application's code to the working directory with correct permissions
+COPY --chown=node:node . .
 
-# Build your app
+# Build your app (TypeScript compile)
 RUN npm run build
 
-# Your app binds to port 3000 so you'll use the EXPOSE instruction to have it mapped by the docker daemon
-EXPOSE 30001
+# Verify the contents of the dist folder for debugging purposes
+RUN ls -l /code/dist
 
-# Define the command to run your app using CMD which defines your runtime
-CMD [ "node", "dist/index.js" ]
+# Expose the port your app will use
+EXPOSE 3001
 
+# Define the command to run your app using the compiled JavaScript file
+CMD ["node", "dist/index.js"]

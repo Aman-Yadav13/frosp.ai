@@ -1,21 +1,27 @@
+import { useSocket } from "@/hooks/useSocket";
 import { cn } from "@/lib/utils";
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { dir } from "console";
 import { ElementRef, useRef, useState } from "react";
+import { AiOutlineFileAdd, AiOutlineFolderAdd } from "react-icons/ai";
 import { RiArrowLeftDoubleFill } from "react-icons/ri";
+import { useParams } from "react-router-dom";
 
 export const Sidebar = ({
   contentRef,
   children,
+  projectName,
 }: {
   contentRef: React.RefObject<HTMLDivElement>;
   children: React.ReactNode;
+  projectName:string;
 }) => {
   const isResizingRef = useRef(false);
   const sidebarRef = useRef<ElementRef<"aside">>(null);
   const navbarRef = useRef<ElementRef<"div">>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-
+    
   const handleMouseDown = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
@@ -86,10 +92,12 @@ export const Sidebar = ({
 
   return (
     <>
+      <div>{projectName}</div>
       <aside
         className={cn(
-          "group/sidebar h-full bg-gray-950 overflow-y-auto relative flex w-60 flex-col z-[99999]",
-          isResetting && "transition-all ease-in-out duration-300"
+          "group/sidebar h-full bg-gray-950 overflow-y-auto relative flex w-60 flex-col z-[99999]  min-w-[220px]",
+          isResetting && "transition-all ease-in-out duration-300",
+          isCollapsed && "min-w-0 w-0"
         )}
         ref={sidebarRef}
       >

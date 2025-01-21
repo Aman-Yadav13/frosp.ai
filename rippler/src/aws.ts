@@ -106,16 +106,17 @@ function createFolder(dirName: string) {
   });
 }
 
-export const saveToS3 = async (
-  key: string,
-  filePath: string,
-  content: string
-): Promise<void> => {
-  const params = {
-    Bucket: process.env.S3_BUCKET ?? "",
-    Key: `${key}${filePath}`,
-    Body: content,
-  };
-
-  await s3.putObject(params).promise();
+export const saveToS3 = async (key: string, content: string): Promise<void> => {
+  console.log("Saving to s3 with key: ", key);
+  try {
+    const params = {
+      Bucket: process.env.S3_BUCKET ?? "",
+      Key: key,
+      Body: content,
+    };
+    await s3.putObject(params).promise();
+    console.log("Saved successfully.");
+  } catch (err: any) {
+    console.log(err);
+  }
 };

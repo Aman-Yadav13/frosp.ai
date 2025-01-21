@@ -1,7 +1,8 @@
 //@ts-nocheck
 import { fork, IPty } from "node-pty";
+import path from "path";
 
-const SHELL = "bash";
+const SHELL = "/bin/rbash"; // Use restricted bash shell
 
 export class TerminalManager {
   private sessions: { [id: string]: { terminal: IPty; replId: string } } = {};
@@ -19,6 +20,10 @@ export class TerminalManager {
       cols: 100,
       name: "xterm",
       cwd: `/workspace`,
+      env: {
+        ...process.env,
+        HOME: `/workspace`, // Set a home directory for the user
+      },
     });
 
     term.on("data", (data: string) => onData(data, term.pid));
