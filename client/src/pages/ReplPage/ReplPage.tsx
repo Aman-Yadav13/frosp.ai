@@ -128,7 +128,7 @@ const CodingPagePodCreated = () => {
         className="w-full flex overflow-hidden border-b border-zinc-800"
         style={{ height: `calc(100% - 20px)` }}
       >
-        <Sidebar contentRef={contentRef}>
+        <Sidebar contentRef={contentRef} projectName={""}>
           <FileTree
             rootDir={rootDir}
             selectedFile={selectedFile}

@@ -102,6 +102,7 @@ function initHandlers(socket: Socket, replId: string) {
     }
   );
 
+
   socket.on(
     "deleteEntry",
     async ({ path: filePath }: { path: string }, callback) => {
