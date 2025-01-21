@@ -19,8 +19,8 @@ import {
   LuChevronRight,
   LuChevronsLeft,
   LuChevronsRight,
-  LuMoreHorizontal,
 } from "react-icons/lu";
+import { MdMoreHoriz } from "react-icons/md";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -204,7 +204,7 @@ export const UserReplsTable = ({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
                   <span className="sr-only">Open Menu</span>
-                  <LuMoreHorizontal />
+                  <MdMoreHoriz />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-neutral-700">

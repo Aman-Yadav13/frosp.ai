@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { copyS3Folder } from "../aws.ts";
 import Repl from "../models/repl.ts";
+import User from "../models/user.ts";
 
 export const init = async (req: Request, res: Response) => {
   try {
@@ -12,7 +13,7 @@ export const init = async (req: Request, res: Response) => {
       language: planguage,
       stack: pstack,
       owner: user._id,
-      collaborators: [user._id],
+      collaborators: [],
     });
 
     const replId = createdRepl._id;
@@ -21,6 +22,12 @@ export const init = async (req: Request, res: Response) => {
         .status(500)
         .json({ success: false, error: "Failed to create project" });
     }
+
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { repls: replId } },
+      { new: true }
+    );
 
     await copyS3Folder(`base/${planguage}`, `code/${replId}`);
 

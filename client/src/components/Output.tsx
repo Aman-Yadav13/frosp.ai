@@ -7,7 +7,7 @@ export const Output = () => {
   // useEffect(() => {});
 
   return (
-    <div className="w-full bg-white min-h-[40vh]">
+    <div className="w-full bg-white h-full">
       <iframe width={"100%"} height={"100%"} src={`${INSTANCE_URI}`} />
     </div>
   );

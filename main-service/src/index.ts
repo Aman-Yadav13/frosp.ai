@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import replRoutes from "./routes/replRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
 import cookieParser from "cookie-parser";
+import { Ws } from "./ws.ts";
 dotenv.config();
 
 const app = express();
@@ -30,6 +31,7 @@ mongoose
   .connect(process.env.CONNECTION_URL!)
   .then(() => {
     const server = http.createServer(app);
+    Ws(server);
     server.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
   })
   .catch((error: any) => console.log(error));

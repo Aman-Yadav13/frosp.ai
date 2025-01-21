@@ -34,7 +34,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               )}
             >
               <input
-                className="flex-1 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50  px-3 py-1 bg-transparent border-none outline-none focus-visible:ring-0"
+                className="flex-1 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed px-3 py-1 bg-transparent border-none outline-none focus-visible:ring-0"
                 ref={ref}
                 type={showPassword ? "text" : "password"}
                 {...props}

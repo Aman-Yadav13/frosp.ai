@@ -15,7 +15,7 @@ export const Workspace = ({
 }) => {
   if (!selectedFile) {
     return (
-      <div className="flex-1 w-[60%] flex items-center justify-center border-r border-r-slate-800">
+      <div className="flex-1 flex h-full items-center justify-center border-r border-r-slate-800">
         <h1 className="text-2xl text-gray-400">
           Select a file to start coding
         </h1>
@@ -44,7 +44,7 @@ export const Workspace = ({
   };
 
   return (
-    <div className="flex-1 w-[60%]">
+    <div className="flex-1">
       <Editor
         height="100vh"
         language={language}

@@ -13,7 +13,7 @@ const OPTIONS_TERM = {
   useStyle: true,
   screenKeys: true,
   cursorBlink: true,
-  cols: 200,
+  cols: 100,
   theme: {
     background: "black",
   },
@@ -40,8 +40,8 @@ export const TerminalComponent = ({
     fitAddon.fit();
     function terminalHandler({ data }) {
       if (data instanceof ArrayBuffer) {
-        console.error(data);
-        console.log(ab2str(data));
+        // console.error(data);
+        // console.log(ab2str(data));
         term.write(ab2str(data));
       }
     }
@@ -62,7 +62,7 @@ export const TerminalComponent = ({
 
   return (
     <div
-      className="h-full overflow-scroll text-left w-full ml-1"
+      className="h-full overflow-scroll text-left w-full ml-1 overflow-x-visible"
       ref={terminalRef}
     ></div>
   );
