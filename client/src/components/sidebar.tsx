@@ -14,14 +14,14 @@ export const Sidebar = ({
 }: {
   contentRef: React.RefObject<HTMLDivElement>;
   children: React.ReactNode;
-  projectName:string;
+  projectName: string;
 }) => {
   const isResizingRef = useRef(false);
   const sidebarRef = useRef<ElementRef<"aside">>(null);
   const navbarRef = useRef<ElementRef<"div">>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-    
+
   const handleMouseDown = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
@@ -101,9 +101,9 @@ export const Sidebar = ({
         )}
         ref={sidebarRef}
       >
-        <div className="py-2 px-1">{children}</div>
+        <div className="">{children}</div>
 
-        <div
+        {/* <div
           onClick={collapse}
           role="button"
           className={cn(
@@ -111,11 +111,11 @@ export const Sidebar = ({
           )}
         >
           <RiArrowLeftDoubleFill className="h-6 w-6" />
-        </div>
+        </div> */}
         <div
           onMouseDown={handleMouseDown}
           onClick={resetWidth}
-          className="opacity-0 group-hover/sidebar:opacity-100 transition cursor-ew-resize absolute h-full w-1 bg-primary/10 right-0 top-0"
+          className="opacity-0 group-hover/sidebar:opacity-100 transition cursor-ew-resize absolute h-full w-[1px] bg-primary/10 right-0 top-0"
         />
       </aside>
       <div

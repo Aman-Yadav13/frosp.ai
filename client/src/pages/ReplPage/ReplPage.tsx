@@ -23,10 +23,13 @@ import { CodingPageSkeleton } from "@/components/skeletons/CodingPageSkeleton";
 import { FooterTools } from "@/components/FooterTools";
 import { getFTL } from "@/api/repl";
 import { useBackSocket } from "@/hooks/useBackSocket";
+import { useCurrentProject } from "@/hooks/useCurrentProject";
 
 const ReplPage = () => {
   const { userId, projectId } = useParams();
   const [podCreated, setPodCreated] = useState(false);
+  const { setProject } = useCurrentProject((state) => state);
+  const backSocket = useBackSocket(projectId!);
 
   const startContainer = useCallback(async () => {
     try {
@@ -46,12 +49,22 @@ const ReplPage = () => {
       startContainer();
     }
   }, [startContainer]);
+
+  useEffect(() => {
+    backSocket?.emit("getProjectDetails", projectId, (project: any) => {
+      setProject(project);
+    });
+  }, [backSocket]);
+
   if (!podCreated) {
     return <CodingPageSkeleton />;
   }
 
   return <CodingPagePodCreated />;
 };
+
+export const directoryCache = new Map<string, RemoteFile[]>();
+export const fileContentCache = new Map<string, string>();
 
 const CodingPagePodCreated = () => {
   const { projectId } = useParams();
@@ -62,10 +75,13 @@ const CodingPagePodCreated = () => {
   const socket = useSocket(projectId!);
   const [fileStructure, setFileStructure] = useState<RemoteFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+  const [selectedNode, setSelectedNode] = useState<File | undefined>(undefined);
+  const [isRenamingFile, setIsRenamingFile] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
-  // if (!socket || !socket.connected) {
-  //   return null;
-  // }
+  const [selectedDirectory, setSelectedDirectory] = useState<string>("/");
+  const [filesInToolbar, setFilesInToolbar] = useState<(RemoteFile | File)[]>(
+    []
+  );
 
   const getFreeTimeLeft = useCallback(async () => {
     try {
@@ -80,10 +96,10 @@ const CodingPagePodCreated = () => {
   useEffect(() => {
     getFreeTimeLeft();
   }, [getFreeTimeLeft]);
+
   useEffect(() => {
     if (socket) {
       socket.on("loaded", ({ rootContent }: { rootContent: RemoteFile[] }) => {
-        console.log("Root content: ", rootContent);
         setLoaded(true);
         setFileStructure(rootContent);
       });
@@ -91,29 +107,180 @@ const CodingPagePodCreated = () => {
   }, [socket]);
 
   const onSelect = (file: File) => {
+    setSelectedNode(file);
+    if (file?.type === Type.FILE) {
+      const isAlreadyPresent = filesInToolbar.find((f) => f.path === file.path);
+      if (!isAlreadyPresent) {
+        setFilesInToolbar((prev) => [...prev, file]);
+      }
+    }
+
     if (file?.type === Type.DIRECTORY) {
-      socket?.emit("fetchDir", file.path, (data: RemoteFile[]) => {
+      if (directoryCache.has(file?.path)) {
+        const cachedData = directoryCache.get(file?.path)!;
         setFileStructure((prev) => {
-          const allFiles = [...prev, ...data];
+          const allFiles = [...prev, ...cachedData];
           return allFiles.filter(
             (file, index, self) =>
-              index === self.findIndex((f) => f.path === file.path)
+              index === self.findIndex((f) => f?.path === file?.path)
           );
         });
-      });
+      } else {
+        socket?.emit("fetchDir", file?.path, (data: RemoteFile[]) => {
+          directoryCache.set(file?.path, data);
+          setFileStructure((prev) => {
+            const allFiles = [...prev, ...data];
+            return allFiles.filter(
+              (file, index, self) =>
+                index === self.findIndex((f) => f?.path === file?.path)
+            );
+          });
+        });
+      }
     } else {
-      socket?.emit("fetchContent", { path: file.path }, (data: string) => {
-        file.content = data;
+      if (fileContentCache.has(file?.path)) {
+        file.content = fileContentCache.get(file?.path)!;
         setSelectedFile(file);
+      } else {
+        socket?.emit("fetchContent", { path: file?.path }, (data: string) => {
+          file.content = data;
+          fileContentCache.set(file?.path, data);
+          setSelectedFile(file);
+        });
+      }
+    }
+  };
+
+  const updateFileStructureOnRename = (newName: string) => {
+    if (!selectedNode) return;
+
+    const oldPath = selectedNode.path;
+    const isDirectory = selectedNode.type === Type.DIRECTORY;
+
+    const updateCacheKeys = (
+      cache: Map<string, any>,
+      oldPath: string,
+      newPath: string
+    ) => {
+      const entriesToUpdate = Array.from(cache.entries()).filter(
+        ([path]) => path === oldPath || path.startsWith(`${oldPath}/`)
+      );
+
+      for (const [key, value] of entriesToUpdate) {
+        const updatedKey = key.replace(oldPath, newPath);
+        cache.delete(key);
+        cache.set(updatedKey, value);
+      }
+    };
+
+    if (isDirectory) {
+      const newPath = oldPath.replace(/[^/]+$/, newName);
+      updateCacheKeys(directoryCache, oldPath, newPath);
+      updateCacheKeys(fileContentCache, oldPath, newPath);
+    } else {
+      const newPath = oldPath.replace(/[^/]+$/, newName);
+      if (fileContentCache.has(oldPath)) {
+        const content = fileContentCache.get(oldPath)!;
+        fileContentCache.delete(oldPath);
+        fileContentCache.set(newPath, content);
+      }
+    }
+    setFileStructure((prev) => {
+      return prev.map((file) => {
+        if (file.path === oldPath || file.path.startsWith(`${oldPath}/`)) {
+          file.path = file.path.replace(
+            oldPath,
+            oldPath.replace(/[^/]+$/, newName)
+          );
+          file.name = file.path.split("/").pop()!;
+        }
+        return file;
       });
+    });
+  };
+
+  const updateFileStructureOnAdd = (newFileName: string, type: string) => {
+    if (type == "dir") {
+      let newDir: any;
+      if (selectedDirectory === "/") {
+        newDir = {
+          name: newFileName,
+          path: `/${newFileName}`,
+          type,
+        };
+      } else {
+        newDir = {
+          name: newFileName,
+          path: `${selectedNode?.path}/${newFileName}`,
+          type,
+        } as RemoteFile;
+      }
+      setFileStructure((prev) => [...prev, newDir]);
+    } else if (type == "file") {
+      let newFile: any;
+      if (selectedDirectory === "/") {
+        newFile = {
+          name: newFileName,
+          path: `/${newFileName}`,
+          type,
+        };
+      } else {
+        newFile = {
+          name: newFileName,
+          path: `${selectedNode?.path}/${newFileName}`,
+          type,
+        };
+      }
+      setFileStructure((prev) => [...prev, newFile]);
+    }
+  };
+
+  console.log(fileStructure);
+
+  const updateFileStructureOnDelete = (path: string, type: string) => {
+    if (!path) return;
+
+    const deleteCacheEntries = (
+      cache: Map<string, any>,
+      predicate: (key: string) => boolean
+    ) => {
+      for (const key of Array.from(cache.keys())) {
+        if (predicate(key)) {
+          cache.delete(key);
+        }
+      }
+    };
+
+    if (type === "directory") {
+      deleteCacheEntries(directoryCache, (key) => key.startsWith(path));
+      deleteCacheEntries(fileContentCache, (key) => key.startsWith(path));
+
+      setFileStructure((prev) =>
+        prev.filter((file) => !file.path.startsWith(path))
+      );
+    } else {
+      deleteCacheEntries(fileContentCache, (key) => key === path);
+
+      for (const [dirPath, files] of directoryCache.entries()) {
+        const updatedFiles = files.filter((file) => file.path !== path);
+        if (updatedFiles.length < files.length) {
+          directoryCache.set(dirPath, updatedFiles);
+        }
+      }
+
+      setFileStructure((prev) => prev.filter((file) => file.path !== path));
     }
   };
 
   if (!loaded) {
     // return <CodingPageSkeleton />;
   }
+
   const rootDir = useMemo(() => {
-    return buildFileTree(fileStructure);
+    const fileTree = buildFileTree(fileStructure);
+    return fileTree;
+
+    // return buildFileTree(fileStructure);
   }, [fileStructure]);
 
   useEffect(() => {
@@ -131,8 +298,19 @@ const CodingPagePodCreated = () => {
         <Sidebar contentRef={contentRef} projectName={""}>
           <FileTree
             rootDir={rootDir}
+            fileStructure={fileStructure}
+            setFileStructure={setFileStructure}
             selectedFile={selectedFile}
+            selectedNode={selectedNode}
+            setSelectedNode={setSelectedNode}
             onSelect={onSelect}
+            isRenamingFile={isRenamingFile}
+            setIsRenamingFile={setIsRenamingFile}
+            updateFileStructureOnRename={updateFileStructureOnRename}
+            updateFileStructureOnAdd={updateFileStructureOnAdd}
+            updateFileStructureOnDelete={updateFileStructureOnDelete}
+            selectedDirectory={selectedDirectory}
+            setSelectedDirectory={setSelectedDirectory}
           />
         </Sidebar>
         <div ref={contentRef} className="flex-1 flex w-full h-full">
@@ -152,8 +330,11 @@ const CodingPagePodCreated = () => {
                 <Workspace
                   socket={socket!}
                   selectedFile={selectedFile}
+                  setSelectedFile={setSelectedFile}
                   onSelect={onSelect}
                   files={fileStructure}
+                  filesInToolbar={filesInToolbar}
+                  setFilesInToolbar={setFilesInToolbar}
                 />
               </ResizablePanel>
               <ResizableHandle />

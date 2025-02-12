@@ -9,10 +9,12 @@ import { Switch } from "../ui/switch";
 import { updateCollaborationStatus } from "@/api/repl";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { useCurrentProject } from "@/hooks/useCurrentProject";
 
 export const InspectProjectModal = () => {
   const { data, setData, onClose } = useModal();
   const { userInfo } = useUser();
+  const { setProject } = useCurrentProject((state) => state);
   const navigate = useNavigate();
 
   const formatDate = (isoString: string) => {
@@ -33,7 +35,6 @@ export const InspectProjectModal = () => {
     };
     return `${day}${suffix(day)} ${format(date, "MMMM yyyy")}`;
   };
-
   const FormattedDate = (date: string) => {
     const formattedDate = formatDate(date);
     return <>{formattedDate}</>;
@@ -41,6 +42,7 @@ export const InspectProjectModal = () => {
 
   const handleOpenProject = () => {
     onClose();
+    setProject(data);
     navigate(`/project/${userInfo._id}/${data._id}`);
   };
 

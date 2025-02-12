@@ -8,6 +8,7 @@ import {
 } from "react-icons/si";
 import { FcFolder, FcOpenedFolder, FcPicture, FcFile } from "react-icons/fc";
 import { AiFillFileText } from "react-icons/ai";
+import { FaRegFile } from "react-icons/fa";
 
 function getIconHelper() {
   const cache = new Map<string, ReactNode>();
@@ -24,6 +25,7 @@ function getIconHelper() {
   cache.set("txt", <AiFillFileText color="white" />);
   cache.set("closedDirectory", <FcFolder />);
   cache.set("openDirectory", <FcOpenedFolder />);
+  cache.set("createFileIcon", <FaRegFile />);
   return function (extension: string, name: string): ReactNode {
     if (cache.has(extension)) return cache.get(extension);
     else if (cache.has(name)) return cache.get(name);
