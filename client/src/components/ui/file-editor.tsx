@@ -1,35 +1,58 @@
 import { useSocket } from "@/hooks/useSocket";
 import React, { useEffect } from "react";
-import {
-  AiOutlineFileAdd,
-  AiOutlineFolderAdd,
-  AiOutlineEdit,
-} from "react-icons/ai";
 import { useParams } from "react-router-dom";
-import { Directory } from "../external/utils/file-manager";
+import { Directory, File } from "../external/utils/file-manager";
+import { useCurrentProject } from "@/hooks/useCurrentProject";
+import { MdKeyboardArrowRight } from "react-icons/md";
+import { cn } from "@/lib/utils";
+import { useFileEditor } from "@/hooks/useFileEditor";
+import { CgFileAdd, CgFolderAdd } from "react-icons/cg";
 
 interface FileEditorProps {
-  selectedFile: File | Directory | undefined;
+  selectedFile: Directory | File | undefined;
   path: string | undefined;
   filePath?: string | undefined;
+  fileTreeCollapsed: boolean;
+  setFileTreeCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  isRenamingFile: boolean;
+  setIsRenamingFile: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedNode: File | undefined;
+  updateFileStructureOnDelete: (path: string, type: string) => void;
 }
 
-export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
+export const FileEditor = ({
+  selectedFile,
+  path,
+  fileTreeCollapsed,
+  setFileTreeCollapsed,
+  setIsRenamingFile,
+  selectedNode,
+  updateFileStructureOnDelete,
+}: FileEditorProps) => {
   const { projectId } = useParams();
   const socket = useSocket(projectId!);
-  console.log("Selected Directory in FileEditor:", path);
+
+  const { project } = useCurrentProject();
+  const {
+    setRenameProvided,
+    setIsRenamingCompleted,
+    setIsAddingFolder,
+    setFolderNameProvided,
+    setIsAddingFile,
+    setFileNameProvided,
+  } = useFileEditor((state) => state);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === "Delete" &&
-        (selectedFile || !path || (!selectedFile && path))
+        (selectedNode || !path || (!selectedNode && path))
       ) {
         deleteEntry();
       }
       if (
         event.key === "F2" &&
-        (selectedFile || !path || (!selectedFile && path))
+        (selectedNode || !path || (!selectedNode && path))
       ) {
         renameEntry();
       }
@@ -42,114 +65,95 @@ export const FileEditor = ({ selectedFile, path }: FileEditorProps) => {
     };
   }, [selectedFile, path]);
 
-  const addNewFile = () => {
-    const dir = path || "/";
-    const name = prompt("Enter the name of the file:");
-    if (!name) {
-      alert("File name cannot be empty!");
-      return;
-    }
-
-    const type = "file";
-    const entryPath = socket?.emit("fetchPath", dir);
-    console.log("Adding file at path:", entryPath);
-
-    socket?.emit("addEntry", { dir, name, type }, (response: any) => {
-      if (response.success) {
-        alert(`File "${name}" added successfully in "${dir}"!`);
-      } else {
-        alert(`Error adding file: ${response.error}`);
-      }
-    });
+  const addNewFile = (e: any) => {
+    e.stopPropagation();
+    setIsAddingFolder(false);
+    setFolderNameProvided(undefined);
+    setIsAddingFile(true);
+    setFileNameProvided("");
   };
 
-  const addNewDirectory = () => {
-    const dir = path || "/";
-    const name = prompt("Enter the name of the directory:");
-    if (!name) {
-      alert("Directory name cannot be empty!");
-      return;
-    }
-
-    const type = "dir";
-    const entryPath = `/workspace/${dir.replace(/^\/+/, "")}/${name}`;
-    console.log("Adding directory at path:", entryPath);
-
-    socket?.emit("addEntry", { dir, name, type }, (response: any) => {
-      if (response.success) {
-        alert(`Directory "${name}" added successfully in "${dir}"!`);
-      } else {
-        alert(`Error adding directory: ${response.error}`);
-      }
-    });
+  const addNewDirectory = (e: any) => {
+    e.stopPropagation();
+    setIsAddingFile(false);
+    setFileNameProvided(undefined);
+    setIsAddingFolder(true);
+    setFolderNameProvided("");
   };
 
   const deleteEntry = () => {
-    if (!selectedFile && !path) {
-      alert("No file or directory selected!");
+    if (!selectedNode || !path) {
       return;
     }
 
     let entryPath = "";
-    console.log("Selected File in delete:", selectedFile);
-    console.log("Selected Directory in delete: ", path);
-
-    if (!selectedFile && path) {
-      entryPath = `${path.replace(/^\/+/, "")}`;
-    } else if (selectedFile) {
-      entryPath = `${selectedFile.path.replace(/^\/+/, "")}`;
-      console.log("Deleting file at path:", entryPath);
+    if (selectedNode.type === 1) {
+      entryPath = `${path!.replace(/^\/+/, "")}`;
+      updateFileStructureOnDelete(selectedNode.path, "directory");
+    } else {
+      entryPath = `${selectedNode.path.replace(/^\/+/, "")}`;
+      updateFileStructureOnDelete(selectedNode.path, "file");
     }
-
+    if (!entryPath || entryPath === "/") {
+      return;
+    }
     socket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
       if (response.success) {
-        alert(`Entry deleted successfully!`);
       } else {
-        alert(`Error deleting entry: ${response.error}`);
       }
     });
   };
 
   const renameEntry = () => {
-    if (!selectedFile && !path) {
-      alert("No file or directory selected to rename!");
+    if (!selectedNode && !path) {
       return;
     }
 
-    const oldPath = selectedFile ? selectedFile.path : path;
+    const oldPath = selectedNode ? selectedNode.path : path;
     if (!oldPath) {
-      alert("Could not determine the path to rename.");
       return;
     }
-
-    const newName = prompt("Enter the new name:");
-
-    if (!newName) {
-      alert("Name cannot be empty!");
-      return;
-    }
-
-    const newPath = oldPath.replace(/[^/]+$/, newName);
-    socket?.emit("renameEntry", { oldPath, newPath }, (response: any) => {
-      if (response.success) {
-        alert("Entry renamed successfully!");
-      } else {
-        alert(`Error renaming entry: ${response.error}`);
-      }
-    });
+    setIsRenamingFile(true);
+    setIsRenamingCompleted(false);
+    setRenameProvided(selectedNode?.name);
   };
 
   return (
-    <div>
-      <button onClick={addNewFile}>
-        <AiOutlineFileAdd />
+    <div
+      className="w-full bg-transparent cursor-pointer py-[2px] border-b border-b-neutral-500"
+      role="button"
+      onClick={() => setFileTreeCollapsed(!fileTreeCollapsed)}
+    >
+      <div className="flex items-center group/sidebar-header gap-1">
+        <MdKeyboardArrowRight
+          size={18}
+          className={cn(
+            "transition-all duration-200 text-neutral-200 group-hover/sidebar-header:text-white",
+            !fileTreeCollapsed ? "rotate-90" : "rotate-0"
+          )}
+        />
+        <div className="w-full flex items-center justify-between pr-2">
+          <p className="truncate uppercase text-xs -ml-[2px] font-normal text-neutral-200 group-hover/sidebar-header:text-white transition-all duration-200">
+            {project?.name}
+          </p>
+          <div className="flex items-center gap-[2px]">
+            <div role="button" onClick={(e) => addNewFile(e)}>
+              <CgFileAdd className="w-5 h-5 opacity-0 group-hover/sidebar:opacity-100 transition-all duration-200 text-neutral-400 hover:text-neutral-200" />
+            </div>
+            <div role="button" onClick={(e) => addNewDirectory(e)}>
+              <CgFolderAdd className="h-5 w-5 opacity-0 group-hover/sidebar:opacity-100 transition-all duration-200 text-neutral-400 hover:text-neutral-200" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* <button onClick={addNewFile}>
       </button>
       <button onClick={addNewDirectory}>
         <AiOutlineFolderAdd />
       </button>
       <button onClick={renameEntry}>
         <AiOutlineEdit />
-      </button>{" "}
+      </button>{" "} */}
       {/* Add rename button */}
     </div>
   );

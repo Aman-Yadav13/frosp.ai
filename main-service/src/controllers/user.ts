@@ -179,6 +179,7 @@ const getLoginStatus = asyncHandler(async (req: any, res: any) => {
   const incomingRefreshToken =
     req.cookies?.refreshToken || req.body.refreshToken;
   const incomingAccessToken = req.cookies?.accessToken || req.body.accessToken;
+
   if (!incomingRefreshToken) {
     return res
       .status(200)

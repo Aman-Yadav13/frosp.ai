@@ -15,11 +15,17 @@ export function Ws(httpServer: HttpServer) {
 
     socket.on("updateTimer", async (projectId) => {
       const project = await Repl.findById(projectId);
+      console.log("updateTimerworking");
       if (project && Number(project.freeTrialRemaining) > 0) {
         project.freeTrialRemaining = Number(project.freeTrialRemaining) - 60;
         console.log("Updating project: ", project.freeTrialRemaining);
         await project.save();
       }
+    });
+
+    socket.on("getProjectDetails", async (projectId, callback) => {
+      const project = await Repl.findById(projectId);
+      callback(project);
     });
   });
 }
