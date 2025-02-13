@@ -1,48 +1,73 @@
-//@ts-nocheck
-import { fork, IPty } from "node-pty";
-import path from "path";
+import { spawn, IPty } from "node-pty";
+import { v4 as uuidv4 } from "uuid";
 
-const SHELL = "/bin/rbash"; // Use restricted bash shell
+const SHELL = "/bin/rbash";
+const RESTRICTED_SHELL = "restricted_shell.sh";
 
 export class TerminalManager {
-  private sessions: { [id: string]: { terminal: IPty; replId: string } } = {};
+  private sessions: {
+    [id: string]: { terminal: IPty; replId: string; socketId: string };
+  } = {};
 
   constructor() {
     this.sessions = {};
   }
 
   createPty(
-    id: string,
+    socketId: string,
     replId: string,
-    onData: (data: string, id: number) => void
-  ) {
-    let term = fork(SHELL, [], {
+    onData: (data: string, sessionId: string) => void
+  ): string {
+    const sessionId = uuidv4();
+
+    const term: IPty = spawn(SHELL, ["-c", RESTRICTED_SHELL], {
       cols: 100,
-      name: "xterm",
-      cwd: `/workspace`,
+      rows: 30,
+      name: "xterm-256color",
+      cwd: "/workspace",
       env: {
         ...process.env,
-        HOME: `/workspace`, // Set a home directory for the user
+        HOME: "/workspace",
+        PATH: "/usr/local/bin:" + (process.env.PATH || ""),
       },
     });
 
-    term.on("data", (data: string) => onData(data, term.pid));
-    this.sessions[id] = {
+    term.onData((data: string) => onData(data, sessionId));
+
+    this.sessions[sessionId] = {
       terminal: term,
       replId,
+      socketId,
     };
-    term.on("exit", () => {
-      delete this.sessions[term.pid];
+
+    term.onExit(() => {
+      delete this.sessions[sessionId];
     });
-    return term;
+
+    return sessionId;
   }
 
-  write(terminalId: string, data: string) {
-    this.sessions[terminalId]?.terminal.write(data);
+  suspend(sessionId: string) {
+    const session = this.sessions[sessionId];
+    if (session) {
+      session.terminal.kill();
+      delete this.sessions[sessionId];
+    }
   }
 
-  clear(terminalId: string) {
-    this.sessions[terminalId].terminal.kill();
-    delete this.sessions[terminalId];
+  write(sessionId: string, data: string) {
+    this.sessions[sessionId]?.terminal.write(data);
+  }
+
+  resize(sessionId: string, cols: number, rows: number) {
+    const session = this.sessions[sessionId];
+    if (session) {
+      session.terminal.resize(cols, rows);
+    }
+  }
+
+  clear(sessionId: string) {
+    this.sessions[sessionId]?.terminal.kill();
+    delete this.sessions[sessionId];
   }
 }

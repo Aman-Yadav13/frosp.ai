@@ -120,7 +120,7 @@ export const FileEditor = ({
 
   return (
     <div
-      className="w-full bg-transparent cursor-pointer py-[2px] border-b border-b-neutral-500"
+      className="w-full bg-transparent cursor-pointer pb-[1px] pt-[2px] border-b border-b-neutral-700"
       role="button"
       onClick={() => setFileTreeCollapsed(!fileTreeCollapsed)}
     >
@@ -128,12 +128,12 @@ export const FileEditor = ({
         <MdKeyboardArrowRight
           size={18}
           className={cn(
-            "transition-all duration-200 text-neutral-200 group-hover/sidebar-header:text-white",
+            "transition-all duration-200 text-gray-300 group-hover/sidebar-header:text-gray-200",
             !fileTreeCollapsed ? "rotate-90" : "rotate-0"
           )}
         />
         <div className="w-full flex items-center justify-between pr-2">
-          <p className="truncate uppercase text-xs -ml-[2px] font-normal text-neutral-200 group-hover/sidebar-header:text-white transition-all duration-200">
+          <p className="truncate uppercase text-xs -ml-[2px] font-normal text-gray-300 group-hover/sidebar-header:text-gray-2-0 transition-all duration-200">
             {project?.name}
           </p>
           <div className="flex items-center gap-[2px]">
@@ -146,15 +146,6 @@ export const FileEditor = ({
           </div>
         </div>
       </div>
-      {/* <button onClick={addNewFile}>
-      </button>
-      <button onClick={addNewDirectory}>
-        <AiOutlineFolderAdd />
-      </button>
-      <button onClick={renameEntry}>
-        <AiOutlineEdit />
-      </button>{" "} */}
-      {/* Add rename button */}
     </div>
   );
 };

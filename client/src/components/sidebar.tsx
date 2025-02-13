@@ -36,7 +36,7 @@ export const Sidebar = ({
   const handleMouseMove = (event: MouseEvent) => {
     if (!isResizingRef.current) return;
     let newWidth = event.clientX;
-    if (newWidth < 220) newWidth = 220;
+    if (newWidth < 180) newWidth = 180;
     if (newWidth > 310) newWidth = 310;
 
     if (sidebarRef.current && navbarRef.current && contentRef.current) {
@@ -95,23 +95,13 @@ export const Sidebar = ({
       <div>{projectName}</div>
       <aside
         className={cn(
-          "group/sidebar h-full bg-gray-950 overflow-y-auto relative flex w-60 flex-col z-[99999]  min-w-[220px]",
+          "group/sidebar h-full bg-neutral-900 overflow-y-auto relative flex w-60 flex-col z-[99999] min-w-[180px]",
           isResetting && "transition-all ease-in-out duration-300",
           isCollapsed && "min-w-0 w-0"
         )}
         ref={sidebarRef}
       >
         <div className="">{children}</div>
-
-        {/* <div
-          onClick={collapse}
-          role="button"
-          className={cn(
-            "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 absolute top-3 right-2 opacity-0 group-hover/sidebar:opacity-100 transition"
-          )}
-        >
-          <RiArrowLeftDoubleFill className="h-6 w-6" />
-        </div> */}
         <div
           onMouseDown={handleMouseDown}
           onClick={resetWidth}

@@ -10,7 +10,6 @@ import {
   Type,
 } from "@/components/external/utils/file-manager";
 import { Output } from "@/components/Output";
-import { TerminalComponent } from "@/components/Terminal";
 import { FileTree } from "@/components/external/file-tree";
 import { startK8sContainer } from "@/api/k8s";
 import { WorkspaceToolsComponent } from "@/components/WorkspaceToolsComponent";
@@ -24,6 +23,7 @@ import { FooterTools } from "@/components/FooterTools";
 import { getFTL } from "@/api/repl";
 import { useBackSocket } from "@/hooks/useBackSocket";
 import { useCurrentProject } from "@/hooks/useCurrentProject";
+import { TerminalsContainer } from "@/components/TerminalsContainer";
 
 const ReplPage = () => {
   const { userId, projectId } = useParams();
@@ -291,6 +291,13 @@ const CodingPagePodCreated = () => {
 
   return (
     <div className="h-full w-full overflow-hidden flex flex-col">
+      <WorkspaceToolsComponent
+        setShowOutput={setShowOutput}
+        timeRemaining={timeRemaining}
+        setTimeRemaining={setTimeRemaining}
+        backSocket={backSocket}
+        showOutput={showOutput}
+      />
       <div
         className="w-full flex overflow-hidden border-b border-zinc-800"
         style={{ height: `calc(100% - 20px)` }}
@@ -315,13 +322,6 @@ const CodingPagePodCreated = () => {
         </Sidebar>
         <div ref={contentRef} className="flex-1 flex w-full h-full">
           <div className="flex flex-col w-full h-full">
-            <WorkspaceToolsComponent
-              setShowOutput={setShowOutput}
-              timeRemaining={timeRemaining}
-              setTimeRemaining={setTimeRemaining}
-              backSocket={backSocket}
-              showOutput={showOutput}
-            />
             <ResizablePanelGroup
               direction="horizontal"
               className="flex-1 w-full h-full flex"
@@ -351,7 +351,7 @@ const CodingPagePodCreated = () => {
                     )}
                     {socket && socket.connected && (
                       <ResizablePanel>
-                        <TerminalComponent
+                        <TerminalsContainer
                           showOutput={showOutput}
                           socket={socket!}
                         />
