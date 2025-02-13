@@ -19,12 +19,14 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@types/uuid": "^10.0.0",
     "aws-sdk": "^2.1692.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "node-pty": "^1.0.0",
     "socket.io": "^4.8.1",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.1.0",
+    "uuid": "^11.0.5"
   }
 }

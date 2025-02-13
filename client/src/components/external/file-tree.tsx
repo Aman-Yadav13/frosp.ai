@@ -107,7 +107,7 @@ export const FileTree = (props: FileTreeProps) => {
       />
       <AnimatePresence>
         {!fileTreeCollapsed && (
-          <div className="w-full h-auto pl-2">
+          <div className="w-full pl-2">
             {selectedDirectory === "/" && isAddingFolder && (
               <>
                 <div className={cn(`flex items-center`)}>

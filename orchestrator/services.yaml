@@ -80,7 +80,7 @@ spec:
               mountPath: /workspace
       containers:
         - name: rippler-service
-          image: amantests01/rippler-service:0.0.7
+          image: amantests01/rippler-service:2.0.2
           ports:
             - containerPort: 3000
             - containerPort: 3001

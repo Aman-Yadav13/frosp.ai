@@ -16,6 +16,12 @@ RUN npm install
 # Copy the rest of your application's code to the working directory with correct permissions
 COPY --chown=node:node . .
 
+# Copy the restricted shell script to a directory not affected by volume mounts (e.g., /usr/local/bin)
+COPY --chown=node:node restricted_shell.sh /usr/local/bin/restricted_shell.sh
+
+# Make sure the script is executable
+RUN chmod +x /usr/local/bin/restricted_shell.sh
+
 # Build your app (TypeScript compile)
 RUN npm run build
 

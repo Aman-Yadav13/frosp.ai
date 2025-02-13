@@ -102,7 +102,6 @@ function initHandlers(socket: Socket, replId: string) {
     }
   );
 
-
   socket.on(
     "deleteEntry",
     async ({ path: filePath }: { path: string }, callback) => {
@@ -187,18 +186,29 @@ function initHandlers(socket: Socket, replId: string) {
     }
   );
 
-  socket.on("requestTerminal", async () => {
-    terminalManager.createPty(socket.id, replId, (data, id) => {
-      socket.emit("terminal", {
-        data: Buffer.from(data, "utf-8"),
-      });
-    });
+  socket.on("spawnTerminal", async () => {
+    const sessionId = terminalManager.createPty(
+      socket.id,
+      replId,
+      async (data, sessionId) => {
+        socket.emit("terminalData", {
+          terminalId: sessionId,
+          data: Buffer.from(data, "utf-8"),
+        });
+      }
+    );
+    socket.emit("terminalSpawned", { terminalId: sessionId });
   });
 
-  socket.on(
-    "terminalData",
-    async ({ data }: { data: string; terminalId: number }) => {
-      terminalManager.write(socket.id, data);
-    }
-  );
+  socket.on("suspendTerminal", ({ terminalId }) => {
+    terminalManager.suspend(terminalId);
+  });
+
+  socket.on("terminalData", async ({ terminalId, data }) => {
+    terminalManager.write(terminalId, data);
+  });
+
+  socket.on("resizeTerminal", async ({ sessionId, cols, rows }) => {
+    terminalManager.resize(sessionId, cols, rows);
+  });
 }
