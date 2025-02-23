@@ -20,9 +20,21 @@ export const WorkspaceFilesToolbar = ({
   selectedFile,
   setSelectedFile,
 }: WorkspaceFilesToolbarProps) => {
-  const removeFileFromToolbar = (file: RemoteFile | File) => {
+  const removeFileFromToolbar = (
+    file: RemoteFile | File,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    e.stopPropagation();
     if (filesInToolbar.length === 1) {
       setSelectedFile(undefined);
+    } else {
+      if (selectedFile?.path === file.path) {
+        if (filesInToolbar[0]?.path === file.path) {
+          setSelectedFile(filesInToolbar[1] as File);
+        } else {
+          setSelectedFile(filesInToolbar[0] as File);
+        }
+      }
     }
     setFilesInToolbar((prev) => prev.filter((f) => f !== file));
   };
@@ -57,7 +69,7 @@ export const WorkspaceFilesToolbar = ({
               "group-hover:visible invisible px-[2px] py-[2px] hover:bg-neutral-700 rounded-sm flex items-center justify-center"
             )}
             role="button"
-            onClick={() => removeFileFromToolbar(file)}
+            onClick={(e) => removeFileFromToolbar(file, e)}
           >
             <XIcon className="h-3 w-3" />
           </div>

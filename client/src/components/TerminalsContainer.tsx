@@ -55,7 +55,7 @@ export const TerminalsContainer = ({
 
   return (
     <div className="h-full w-full">
-      <div className="h-6 flex flex-row-reverse justify-between overflow-hidden pr-2 gap-2 w-full border-b">
+      <div className="h-6 flex flex-row-reverse justify-between pr-2 gap-2 w-full border-b">
         <div
           className="h-full flex items-center justify-center cursor-pointer"
           role="button"
@@ -81,16 +81,18 @@ export const TerminalsContainer = ({
                 <span className="text-sm">Terminal</span>
               </div>
               <div className="flex items-center justify-center px-[1px] py-[1px] overflow-hidden h-full w-full">
-                <X
-                  className={cn(
-                    "group-hover/tb:opacity-100 opacity-0 transtion-all duration-100 h-3 w-3 text-gray-400 hover:bg-neutral-800 rounded-sm",
-                    selectedTerminal === terminalId && "hover:bg-neutral-950"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSuspendTerminal(terminalId);
-                  }}
-                />
+                {terminals.length > 1 && (
+                  <X
+                    className={cn(
+                      "group-hover/tb:opacity-100 opacity-0 transtion-all duration-100 h-3 w-3 text-gray-400 hover:bg-neutral-800 rounded-sm",
+                      selectedTerminal === terminalId && "hover:bg-neutral-950"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSuspendTerminal(terminalId);
+                    }}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -103,6 +105,7 @@ export const TerminalsContainer = ({
           position: "relative",
           height: "calc(100% - 24px)",
           width: "100%",
+          overflowY: "scroll",
         }}
       >
         {terminals.map((terminalId) => (

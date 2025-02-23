@@ -1,12 +1,13 @@
 import { useSocket } from "@/hooks/useSocket";
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Directory, File } from "../external/utils/file-manager";
+import { Directory, File, RemoteFile } from "../external/utils/file-manager";
 import { useCurrentProject } from "@/hooks/useCurrentProject";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import { useFileEditor } from "@/hooks/useFileEditor";
 import { CgFileAdd, CgFolderAdd } from "react-icons/cg";
+import { useBackSocket } from "@/hooks/useBackSocket";
 
 interface FileEditorProps {
   selectedFile: Directory | File | undefined;
@@ -18,6 +19,10 @@ interface FileEditorProps {
   setIsRenamingFile: React.Dispatch<React.SetStateAction<boolean>>;
   selectedNode: File | undefined;
   updateFileStructureOnDelete: (path: string, type: string) => void;
+  filesInToolbar: (RemoteFile | File)[];
+  setFilesInToolbar: React.Dispatch<
+    React.SetStateAction<(RemoteFile | File)[]>
+  >;
 }
 
 export const FileEditor = ({
@@ -31,7 +36,7 @@ export const FileEditor = ({
 }: FileEditorProps) => {
   const { projectId } = useParams();
   const socket = useSocket(projectId!);
-
+  const backSocket = useBackSocket(projectId!);
   const { project } = useCurrentProject();
   const {
     setRenameProvided,
@@ -66,6 +71,10 @@ export const FileEditor = ({
   }, [selectedFile, path]);
 
   const addNewFile = (e: any) => {
+    if (fileTreeCollapsed) {
+      setFileTreeCollapsed(false);
+    }
+
     e.stopPropagation();
     setIsAddingFolder(false);
     setFolderNameProvided(undefined);
@@ -74,6 +83,9 @@ export const FileEditor = ({
   };
 
   const addNewDirectory = (e: any) => {
+    if (fileTreeCollapsed) {
+      setFileTreeCollapsed(false);
+    }
     e.stopPropagation();
     setIsAddingFile(false);
     setFileNameProvided(undefined);
@@ -97,9 +109,14 @@ export const FileEditor = ({
     if (!entryPath || entryPath === "/") {
       return;
     }
+
     socket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
       if (response.success) {
       } else {
+      }
+    });
+    backSocket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
+      if (!response.success) {
       }
     });
   };

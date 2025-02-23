@@ -13,6 +13,7 @@ const httpServer = createServer(app);
 initWs(httpServer);
 
 const port = process.env.PORT || 3001;
+// const port = 3003;
 httpServer.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

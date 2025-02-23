@@ -1,11 +1,11 @@
-import { Server, Socket } from "socket.io";
+import { DefaultEventsMap, Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import { saveToS3 } from "./aws.js";
 import { fetchDir, fetchFileContent, saveFile } from "./fs.js";
 import { TerminalManager } from "./pty.js";
 import fs from "fs";
-import path from "path";
 import pkg from "aws-sdk";
+import { initCollab } from "./collab.js";
 
 const { S3 } = pkg;
 
@@ -22,15 +22,25 @@ export function initWs(httpServer: HttpServer) {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
+      credentials: true,
     },
     path: `/${process.env.REPL_ID}/socket.io/`,
+    pingTimeout: 15000,
+    pingInterval: 5000,
+  });
+
+  io.of("/").adapter.on("join-room", (room, id) => {
+    console.log(`[WS] Socket ${id} joined ${room}`);
+  });
+
+  io.of("/").adapter.on("leave-room", (room, id) => {
+    console.log(`[WS] Socket ${id} left ${room}`);
   });
 
   io.on("connection", async (socket) => {
     const urlPath = socket.handshake.url;
     const replId = urlPath?.split("/")[1];
-
-    console.log("Connected to REPL:", replId);
+    const { userId } = socket.handshake.query;
 
     if (!replId) {
       socket.disconnect();
@@ -42,11 +52,16 @@ export function initWs(httpServer: HttpServer) {
       rootContent: await fetchDir("/workspace", ""),
     });
 
-    initHandlers(socket, replId);
+    initHandlers(socket, replId, userId as string, io);
   });
 }
 
-function initHandlers(socket: Socket, replId: string) {
+function initHandlers(
+  socket: Socket,
+  replId: string,
+  userId: string,
+  io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>
+) {
   const getUserPath = (dir: string) =>
     `code/${process.env.REPL_ID?.substring(5)}/${dir.replace(/^\/+/, "")}`;
 
@@ -57,12 +72,17 @@ function initHandlers(socket: Socket, replId: string) {
     return process.env.S3_BUCKET;
   };
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
+  initCollab(socket, replId, userId, io);
 
   socket.on("fetchDir", async (dir: string, callback) => {
     const dirPath = `/workspace/${dir}`;
+    console.log(
+      "Fetching dir content user ",
+      userId,
+      " for directory",
+      dirPath
+    );
+
     const contents = await fetchDir(dirPath, dir);
     callback(contents);
   });
@@ -71,6 +91,7 @@ function initHandlers(socket: Socket, replId: string) {
     "fetchContent",
     async ({ path: filePath }: { path: string }, callback) => {
       const fullPath = `/workspace/${filePath}`;
+      console.log("Fetching content user ", userId, " for file", fullPath);
       const data = await fetchFileContent(fullPath);
       callback(data);
     }
@@ -164,24 +185,6 @@ function initHandlers(socket: Socket, replId: string) {
       } catch (error: any) {
         console.error("Error renaming entry:", error);
         callback({ success: false, error: error.message });
-      }
-    }
-  );
-
-  // TODO: contents should be diff, not full file
-  // Should be validated for size
-  // Should be throttled before updating S3 (or use an S3 mount)
-  socket.on(
-    "updateContent",
-    async ({ path: filePath, content }: { path: string; content: string }) => {
-      const fullPath = `/workspace/${filePath.replace(/^\/+/, "")}`;
-      const s3Key = getUserPath(filePath);
-
-      try {
-        await saveFile(fullPath, content);
-        await saveToS3(s3Key, content);
-      } catch (error) {
-        console.error("Error updating content:", error);
       }
     }
   );

@@ -8,7 +8,6 @@ import { getLanguageIcon, getLanguageStyles } from "@/lib/helpers";
 import { Switch } from "../ui/switch";
 import { updateCollaborationStatus } from "@/api/repl";
 import { toast } from "sonner";
-import { useEffect } from "react";
 import { useCurrentProject } from "@/hooks/useCurrentProject";
 
 export const InspectProjectModal = () => {

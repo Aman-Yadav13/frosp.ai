@@ -78,9 +78,14 @@ body,
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* @apply bg-gray-900; */
 }
 
 .xterm-helpers {
   @apply h-0 overflow-hidden;
+}
+
+.cursor-label::after {
+  content: attr(data-label);
+  background-color: var(--user-color);
+  @apply bg-opacity-100 h-auto ml-2 w-fit px-1 py-0.5 rounded-sm absolute text-white text-xs font-medium;
 }

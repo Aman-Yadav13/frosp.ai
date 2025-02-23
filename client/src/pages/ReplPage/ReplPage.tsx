@@ -3,6 +3,8 @@ import { Sidebar } from "@/components/sidebar";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   buildFileTree,
   File,
@@ -28,33 +30,49 @@ import { TerminalsContainer } from "@/components/TerminalsContainer";
 const ReplPage = () => {
   const { userId, projectId } = useParams();
   const [podCreated, setPodCreated] = useState(false);
-  const { setProject } = useCurrentProject((state) => state);
-  const backSocket = useBackSocket(projectId!);
+  const navigate = useNavigate();
 
   const startContainer = useCallback(async () => {
     try {
-      await startK8sContainer({
+      const response = await startK8sContainer({
         userId,
         replId: projectId,
       });
-      setPodCreated(true);
-      return;
+
+      if (response.status === 200) {
+        setPodCreated(true);
+        toast.success("Container started successfully!");
+        return;
+      } else if (response.status === 400) {
+        const data = response.data;
+        if (data.message.includes("Project is full")) {
+          toast.error(data.message, {
+            duration: 5000,
+            action: {
+              label: "Go Home",
+              onClick: () => navigate("/"),
+            },
+          });
+          setTimeout(() => navigate("/"), 5000);
+        }
+      } else if (response.status === 403) {
+        toast.error("Unauthorized access. Please login again.", {
+          duration: 3000,
+        });
+        setTimeout(() => navigate("/"), 3000);
+      } else {
+        toast.error("Failed to start container. Please try again.");
+      }
     } catch (e) {
       console.log(e);
     }
-  }, [projectId]);
+  }, [projectId, navigate]);
 
   useEffect(() => {
     if (projectId) {
       startContainer();
     }
   }, [startContainer]);
-
-  useEffect(() => {
-    backSocket?.emit("getProjectDetails", projectId, (project: any) => {
-      setProject(project);
-    });
-  }, [backSocket]);
 
   if (!podCreated) {
     return <CodingPageSkeleton />;
@@ -71,8 +89,6 @@ const CodingPagePodCreated = () => {
   const contentRef = React.createRef<HTMLDivElement>();
   const [loaded, setLoaded] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const backSocket = useBackSocket(projectId!);
-  const socket = useSocket(projectId!);
   const [fileStructure, setFileStructure] = useState<RemoteFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedNode, setSelectedNode] = useState<File | undefined>(undefined);
@@ -82,29 +98,19 @@ const CodingPagePodCreated = () => {
   const [filesInToolbar, setFilesInToolbar] = useState<(RemoteFile | File)[]>(
     []
   );
+  const { setProject } = useCurrentProject((state) => state);
+
+  const socket = useSocket(projectId!, selectedFile);
+  const backSocket = useBackSocket(projectId!);
 
   const getFreeTimeLeft = useCallback(async () => {
     try {
       const res = await getFTL(projectId!);
       setTimeRemaining(res.timeLeft);
     } catch (e) {
-      //Handle errors;
       console.log(e);
     }
   }, [projectId]);
-
-  useEffect(() => {
-    getFreeTimeLeft();
-  }, [getFreeTimeLeft]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on("loaded", ({ rootContent }: { rootContent: RemoteFile[] }) => {
-        setLoaded(true);
-        setFileStructure(rootContent);
-      });
-    }
-  }, [socket]);
 
   const onSelect = (file: File) => {
     setSelectedNode(file);
@@ -138,6 +144,7 @@ const CodingPagePodCreated = () => {
         });
       }
     } else {
+      socket?.emit("join-file", file?.path);
       if (fileContentCache.has(file?.path)) {
         file.content = fileContentCache.get(file?.path)!;
         setSelectedFile(file);
@@ -197,6 +204,19 @@ const CodingPagePodCreated = () => {
         return file;
       });
     });
+
+    setFilesInToolbar((prev) =>
+      prev.map((file) => {
+        if (file.path === oldPath || file.path.startsWith(`${oldPath}/`)) {
+          file.path = file.path.replace(
+            oldPath,
+            oldPath.replace(/[^/]+$/, newName)
+          );
+          file.name = file.path.split("/").pop()!;
+        }
+        return file;
+      })
+    );
   };
 
   const updateFileStructureOnAdd = (newFileName: string, type: string) => {
@@ -235,8 +255,6 @@ const CodingPagePodCreated = () => {
     }
   };
 
-  console.log(fileStructure);
-
   const updateFileStructureOnDelete = (path: string, type: string) => {
     if (!path) return;
 
@@ -258,6 +276,9 @@ const CodingPagePodCreated = () => {
       setFileStructure((prev) =>
         prev.filter((file) => !file.path.startsWith(path))
       );
+      setFilesInToolbar((prev) =>
+        prev.filter((file) => !file.path.startsWith(path))
+      );
     } else {
       deleteCacheEntries(fileContentCache, (key) => key === path);
 
@@ -269,23 +290,41 @@ const CodingPagePodCreated = () => {
       }
 
       setFileStructure((prev) => prev.filter((file) => file.path !== path));
+      setFilesInToolbar((prev) => prev.filter((file) => file.path !== path));
     }
   };
+
+  const rootDir = useMemo(() => {
+    const fileTree = buildFileTree(fileStructure);
+    return fileTree;
+  }, [fileStructure]);
+
+  useEffect(() => {
+    backSocket?.emit("getProjectDetails", projectId, (project: any) => {
+      setProject(project);
+    });
+  }, [backSocket]);
+
+  useEffect(() => {
+    getFreeTimeLeft();
+  }, [getFreeTimeLeft]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("loaded", ({ rootContent }: { rootContent: RemoteFile[] }) => {
+        setLoaded(true);
+        setFileStructure(rootContent);
+      });
+    }
+  }, [socket]);
 
   if (!loaded) {
     // return <CodingPageSkeleton />;
   }
 
-  const rootDir = useMemo(() => {
-    const fileTree = buildFileTree(fileStructure);
-    return fileTree;
-
-    // return buildFileTree(fileStructure);
-  }, [fileStructure]);
-
   useEffect(() => {
     if (!selectedFile) {
-      onSelect(rootDir?.files[0]);
+      // onSelect(rootDir?.files[0]);
     }
   }, [selectedFile]);
 
@@ -296,6 +335,7 @@ const CodingPagePodCreated = () => {
         timeRemaining={timeRemaining}
         setTimeRemaining={setTimeRemaining}
         backSocket={backSocket}
+        socket={socket}
         showOutput={showOutput}
       />
       <div
@@ -318,6 +358,8 @@ const CodingPagePodCreated = () => {
             updateFileStructureOnDelete={updateFileStructureOnDelete}
             selectedDirectory={selectedDirectory}
             setSelectedDirectory={setSelectedDirectory}
+            filesInToolbar={filesInToolbar}
+            setFilesInToolbar={setFilesInToolbar}
           />
         </Sidebar>
         <div ref={contentRef} className="flex-1 flex w-full h-full">

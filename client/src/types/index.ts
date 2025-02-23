@@ -7,6 +7,13 @@ export type UserInfo = {
   createdAt: string;
 };
 
+export type ActiveUser = {
+  userId: string;
+  userName: string;
+  color: string;
+  currentFile: string | null;
+};
+
 export type Repl = {
   collaborative: boolean;
   _id: string;

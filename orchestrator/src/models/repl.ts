@@ -6,7 +6,16 @@ interface IRepl extends Document {
   stack?: string;
   owner: mongoose.Types.ObjectId;
   collaborators: mongoose.Types.ObjectId[];
+  collaboratorMetrics: {
+    collaborator: mongoose.Types.ObjectId;
+    timeUsedSeconds: number;
+    spaceUsedBytes: number;
+    filesCreated: string[];
+    filesDeleted: string[];
+  }[];
   collaborative: boolean;
+  activeUsers: mongoose.Types.ObjectId[];
+  activeUsersCount: number;
   createdAt: Date;
   updatedAt: Date;
   inviteCode: string;
@@ -39,10 +48,24 @@ const replSchema = new mongoose.Schema<IRepl>(
       required: true,
     },
     collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    collaboratorMetrics: [
+      {
+        collaborator: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        timeUsedSeconds: { type: Number, default: 0 },
+        spaceUsedBytes: { type: Number, default: 0 },
+        filesCreated: [{ type: String, trim: true }],
+        filesDeleted: [{ type: String, trim: true }],
+      },
+    ],
     collaborative: { type: Boolean, default: false },
+    activeUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    activeUsersCount: { type: Number, default: 0 },
     inviteCode: { type: String, default: null },
     freeTrialRemaining: { type: Number, default: 3600 },
-
     description: { type: String, trim: true, default: "" },
     visibility: {
       type: String,
@@ -65,5 +88,10 @@ const replSchema = new mongoose.Schema<IRepl>(
 );
 
 replSchema.index({ name: 1, owner: 1 }, { unique: true });
+replSchema.index({ "collaboratorMetrics.filesCreated": 1 });
+replSchema.index({ "collaboratorMetrics.collaborator": 1 });
+replSchema.index({ "collaboratorMetrics.filesDeleted": 1 });
+replSchema.index({ _id: 1, "collaboratorMetrics.collaborator": 1 });
+
 const Repl = mongoose.model<IRepl, IReplModel>("Repl", replSchema);
 export default Repl;

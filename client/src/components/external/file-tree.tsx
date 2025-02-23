@@ -39,6 +39,10 @@ interface FileTreeProps {
   updateFileStructureOnDelete: (path: string, type: string) => void;
   selectedDirectory: string;
   setSelectedDirectory: React.Dispatch<React.SetStateAction<string>>;
+  filesInToolbar: (RemoteFile | File)[];
+  setFilesInToolbar: React.Dispatch<
+    React.SetStateAction<(RemoteFile | File)[]>
+  >;
 }
 
 export const FileTree = (props: FileTreeProps) => {
@@ -104,6 +108,8 @@ export const FileTree = (props: FileTreeProps) => {
         setIsRenamingFile={props.setIsRenamingFile}
         selectedNode={props.selectedNode}
         updateFileStructureOnDelete={props.updateFileStructureOnDelete}
+        filesInToolbar={props.filesInToolbar}
+        setFilesInToolbar={props.setFilesInToolbar}
       />
       <AnimatePresence>
         {!fileTreeCollapsed && (
@@ -148,6 +154,8 @@ export const FileTree = (props: FileTreeProps) => {
               updateFileStructureOnRename={props.updateFileStructureOnRename}
               updateFileStructureOnAdd={props.updateFileStructureOnAdd}
               updateFileStructureOnDelete={props.updateFileStructureOnDelete}
+              filesInToolbar={props.filesInToolbar}
+              setFilesInToolbar={props.setFilesInToolbar}
             />
           </div>
         )}
@@ -171,6 +179,10 @@ interface SubTreeProps {
   updateFileStructureOnRename: (newName: string) => void;
   updateFileStructureOnAdd: (newFileName: string, type: string) => void;
   updateFileStructureOnDelete: (path: string, type: string) => void;
+  filesInToolbar: (RemoteFile | File)[];
+  setFilesInToolbar: React.Dispatch<
+    React.SetStateAction<(RemoteFile | File)[]>
+  >;
 }
 
 const SubTree = (props: SubTreeProps) => {
@@ -184,6 +196,7 @@ const SubTree = (props: SubTreeProps) => {
   } = useFileEditor((state) => state);
   const { projectId } = useParams();
   const socket = useSocket(projectId!);
+  const backSocket = useSocket(projectId!);
   const fileDir = props.path || "/";
 
   const handleAddFileBlur = () => {
@@ -214,6 +227,14 @@ const SubTree = (props: SubTreeProps) => {
           setIsUpdatingFileStructure(false);
         }
       );
+      backSocket?.emit(
+        "addEntry",
+        { dir: fileDir, name: fileName, type: "file" },
+        (response: any) => {
+          if (!response.success) {
+          }
+        }
+      );
     }
   };
 
@@ -242,6 +263,8 @@ const SubTree = (props: SubTreeProps) => {
             updateFileStructureOnRename={props.updateFileStructureOnRename}
             updateFileStructureOnAdd={props.updateFileStructureOnAdd}
             updateFileStructureOnDelete={props.updateFileStructureOnDelete}
+            filesInToolbar={props.filesInToolbar}
+            setFilesInToolbar={props.setFilesInToolbar}
           />
         </React.Fragment>
       ))}
@@ -280,6 +303,8 @@ const SubTree = (props: SubTreeProps) => {
             updateFileStructureOnRename={props.updateFileStructureOnRename}
             updateFileStructureOnAdd={props.updateFileStructureOnAdd}
             updateFileStructureOnDelete={props.updateFileStructureOnDelete}
+            filesInToolbar={props.filesInToolbar}
+            setFilesInToolbar={props.setFilesInToolbar}
           />
         </React.Fragment>
       ))}
@@ -303,6 +328,10 @@ const FileDiv = (props: {
   updateFileStructureOnRename: (newName: string) => void;
   updateFileStructureOnAdd: (newFileName: string, type: string) => void;
   updateFileStructureOnDelete: (path: string, type: string) => void;
+  filesInToolbar: (RemoteFile | File)[];
+  setFilesInToolbar: React.Dispatch<
+    React.SetStateAction<(RemoteFile | File)[]>
+  >;
 }) => {
   const {
     file,
@@ -329,6 +358,7 @@ const FileDiv = (props: {
   const { projectId } = useParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket(projectId!);
+  const backSocket = useSocket(projectId!);
 
   const handleRenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -355,6 +385,15 @@ const FileDiv = (props: {
         setIsRenamingFile(false);
         setIsUpdatingFileStructure(true);
         setRenameProvided(undefined);
+
+        backSocket?.emit(
+          "renameEntry",
+          { oldPath, newPath },
+          (response: any) => {
+            if (!response.success) {
+            }
+          }
+        );
         socket?.emit("renameEntry", { oldPath, newPath }, (response: any) => {
           if (response.success) {
           } else {
@@ -407,6 +446,10 @@ const FileDiv = (props: {
     if (!entryPath || entryPath === "/") {
       return;
     }
+    backSocket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
+      if (!response.success) {
+      }
+    });
     socket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
       if (response.success) {
       } else {
@@ -546,6 +589,10 @@ const DirDiv = (props: {
   updateFileStructureOnRename: (newName: string) => void;
   updateFileStructureOnAdd: (newFileName: string, type: string) => void;
   updateFileStructureOnDelete: (path: string, type: string) => void;
+  filesInToolbar: (RemoteFile | File)[];
+  setFilesInToolbar: React.Dispatch<
+    React.SetStateAction<(RemoteFile | File)[]>
+  >;
 }) => {
   const {
     directory,
@@ -586,6 +633,7 @@ const DirDiv = (props: {
   const folderInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket(projectId!);
+  const backSocket = useSocket(projectId!);
   const fileDir = path || "/";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -647,6 +695,14 @@ const DirDiv = (props: {
         setIsUpdatingFileStructure(true);
         setRenameProvided(undefined);
         setContextEvent(false);
+        backSocket?.emit(
+          "renameEntry",
+          { oldPath, newPath },
+          (response: any) => {
+            if (!response.success) {
+            }
+          }
+        );
         socket?.emit("renameEntry", { oldPath, newPath }, (response: any) => {
           if (response.success) {
           } else {
@@ -674,6 +730,7 @@ const DirDiv = (props: {
       setIsUpdatingFileStructure(true);
       var folderName = folderNameProvided;
       setFolderNameProvided(undefined);
+
       socket?.emit(
         "addEntry",
         { dir, name: folderName, type },
@@ -703,6 +760,14 @@ const DirDiv = (props: {
           } else {
           }
           setIsUpdatingFileStructure(false);
+        }
+      );
+      backSocket?.emit(
+        "addEntry",
+        { dir: fileDir, name: fileName, type: "file" },
+        (response: any) => {
+          if (!response.success) {
+          }
         }
       );
     }
@@ -742,11 +807,17 @@ const DirDiv = (props: {
     if (!entryPath || entryPath === "/") {
       return;
     }
+
     socket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
       if (response.success) {
       } else {
       }
     });
+    backSocket?.emit("deleteEntry", { path: entryPath }, (response: any) => {
+      if (!response.success) {
+      }
+    });
+
     setContextEvent(false);
   };
 
@@ -852,6 +923,8 @@ const DirDiv = (props: {
                   updateFileStructureOnDelete={
                     props.updateFileStructureOnDelete
                   }
+                  filesInToolbar={props.filesInToolbar}
+                  setFilesInToolbar={props.setFilesInToolbar}
                 />
               </div>
             )}
@@ -928,6 +1001,8 @@ const DirDiv = (props: {
                   updateFileStructureOnDelete={
                     props.updateFileStructureOnDelete
                   }
+                  filesInToolbar={props.filesInToolbar}
+                  setFilesInToolbar={props.setFilesInToolbar}
                 />
               </div>
             )}
@@ -1071,6 +1146,8 @@ const DirDiv = (props: {
                 updateFileStructureOnRename={props.updateFileStructureOnRename}
                 updateFileStructureOnAdd={props.updateFileStructureOnAdd}
                 updateFileStructureOnDelete={props.updateFileStructureOnDelete}
+                filesInToolbar={props.filesInToolbar}
+                setFilesInToolbar={props.setFilesInToolbar}
               />
             </div>
           )}

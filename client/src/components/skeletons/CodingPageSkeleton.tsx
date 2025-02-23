@@ -54,7 +54,7 @@ export const CodingPageSkeleton = () => {
       </div>
       <div className="flex-1 flex w-full h-full">
         <div className="flex flex-col w-full h-full">
-          <div className="min-h-[45px] bg-gray-900 pl-4 pr-2 py-1 w-full overflow-hidden border-b border-b-gray-800">
+          <div className="min-h-[40px] bg-gray-900 pl-4 pr-2 py-1 w-full overflow-hidden border-b border-b-gray-800">
             <div className="w-full h-full flex items-center overflow-hidden">
               <div></div>
               <Skeleton className="ml-auto h-[90%] w-24 self-center" />

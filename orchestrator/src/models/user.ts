@@ -11,6 +11,8 @@ interface IUser extends Document {
   refreshToken?: string;
   repls: mongoose.Types.ObjectId[];
   collab_repls: mongoose.Types.ObjectId[];
+  totalUsageSeconds: number;
+  totalSpaceUsedBytes: number;
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
   generateRefreshToken(): string;
@@ -60,6 +62,8 @@ const userSchema = new mongoose.Schema<IUser>(
         ref: "Repl",
       },
     ],
+    totalUsageSeconds: { type: Number, default: 0 },
+    totalSpaceUsedBytes: { type: Number, default: 0 },
   },
   {
     timestamps: true,

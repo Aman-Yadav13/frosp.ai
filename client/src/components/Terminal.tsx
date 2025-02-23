@@ -42,6 +42,8 @@ export const TerminalComponent = ({
     term.loadAddon(fitAddonRef.current);
     term.open(terminalRef.current);
     termRef.current = term;
+    fitAddonRef.current.fit();
+    termRef.current.refresh(0, termRef.current.rows - 1);
 
     const terminalDataHandler = ({
       terminalId: incomingId,
@@ -118,8 +120,11 @@ export const TerminalComponent = ({
   return (
     <div
       ref={terminalRef}
-      className="h-full w-full overflow-hidden text-left"
-      style={{ height: "100%", width: "100%" }}
+      className="h-full w-full text-left"
+      style={{
+        height: "100%",
+        width: "100%",
+      }}
     ></div>
   );
 };

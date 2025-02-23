@@ -2,6 +2,8 @@ import Editor from "@monaco-editor/react";
 import { Socket } from "socket.io-client";
 import { File, RemoteFile } from "./external/utils/file-manager";
 import { WorkspaceFilesToolbar } from "./WorkspaceFilesToolbar";
+import { useMonacoEditor } from "@/hooks/useMonacoEditor";
+import { WorkspaceCommands } from "./WorkspaceCommands";
 
 interface WorkspaceProps {
   selectedFile: File | undefined;
@@ -18,41 +20,32 @@ interface WorkspaceProps {
 export const Workspace = ({
   selectedFile,
   setSelectedFile,
-  files,
-  socket,
   onSelect,
   filesInToolbar,
   setFilesInToolbar,
 }: WorkspaceProps) => {
-  if (!selectedFile) {
-    return (
-      <div className="flex-1 flex h-full items-center justify-center border-r border-r-slate-800">
-        <h1 className="text-2xl text-gray-400">
-          Select a file to start coding
-        </h1>
-      </div>
-    );
-  }
+  const { setMonacoEditor } = useMonacoEditor();
 
-  const code = selectedFile.content;
-  let language = selectedFile.name.split(".").pop();
+  const code = selectedFile?.content;
+  const language = getLanguage(selectedFile?.name);
+  // console.log("Code: ", code);
 
-  if (language === "js" || language === "jsx") language = "javascript";
-  else if (language === "ts" || language === "tsx") language = "typescript";
-  else if (language === "py") language = "python";
-
-  const debounce = (
-    func: (value: string | undefined) => void,
-    wait: number
+  const handleMount = (
+    editor: import("monaco-editor").editor.IStandaloneCodeEditor
   ) => {
-    let timeout: NodeJS.Timeout;
-    return (value: string | undefined) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        func(value);
-      }, wait);
-    };
+    setMonacoEditor(editor);
   };
+
+  if (!selectedFile) {
+    return <WorkspaceCommands />;
+    // return (
+    //   <div className="flex-1 flex h-full items-center justify-center border-r border-r-slate-800">
+    //     <h1 className="text-2xl text-gray-400">
+    //       Select a file to start coding
+    //     </h1>
+    //   </div>
+    // );
+  }
 
   return (
     <div className="flex-1">
@@ -68,15 +61,32 @@ export const Workspace = ({
       <Editor
         height="100vh"
         language={language}
-        value={code || " "}
+        defaultValue={code || ""}
         theme="vs-dark"
-        onChange={debounce((value: string | undefined) => {
-          socket.emit("updateContent", {
-            path: selectedFile.path,
-            content: value,
-          });
-        }, 500)}
+        onMount={(editor) => handleMount(editor)}
+        options={{
+          automaticLayout: true,
+          minimap: { enabled: false },
+        }}
       />
     </div>
   );
 };
+
+function getLanguage(fileName: string | undefined): string {
+  const extension = fileName?.split(".").pop();
+  switch (extension) {
+    case "js":
+    case "jsx":
+      return "javascript";
+    case "ts":
+    case "tsx":
+      return "typescript";
+    case "py":
+      return "python";
+    case "json":
+      return "json";
+    default:
+      return "plaintext";
+  }
+}

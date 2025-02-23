@@ -22,6 +22,8 @@ const HomeLayout = (props: { children?: React.ReactNode }) => {
         createdAt: user.data.createdAt,
       });
     }
+
+    sessionStorage.setItem("user", JSON.stringify(user.data));
   }, []);
 
   useEffect(() => {
