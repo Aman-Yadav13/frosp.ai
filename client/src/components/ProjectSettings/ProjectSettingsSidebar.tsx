@@ -92,7 +92,7 @@ export const ProjectSettingsSidebar = ({
           onClick={collapse}
           role="button"
           className={cn(
-            "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 absolute top-3 right-2 opacity-60 group-hover/sidebar:opacity-100 transition flex items-center justify-center"
+            "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-600 absolute top-3 right-2 opacity-60 group-hover/sidebar:opacity-100 transition flex items-center justify-center"
           )}
         >
           <BiChevronsLeft className="h-6 w-6" />
@@ -102,7 +102,7 @@ export const ProjectSettingsSidebar = ({
           onClick={resetWidth}
           role="button"
           className={cn(
-            "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 absolute top-3 right-2 opacity-100 group-hover/sidebar:opacity-100 transition"
+            "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-600 absolute top-3 right-2 opacity-100 group-hover/sidebar:opacity-100 transition"
           )}
         >
           <LuMenu className="h-6 w-6" />

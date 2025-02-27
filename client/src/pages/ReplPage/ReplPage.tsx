@@ -45,6 +45,7 @@ const ReplPage = () => {
         return;
       } else if (response.status === 400) {
         const data = response.data;
+        console.log("data: ",data);
         if (data.message.includes("Project is full")) {
           toast.error(data.message, {
             duration: 5000,

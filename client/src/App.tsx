@@ -9,6 +9,8 @@ import ProjectSettingsLayoutPage from "./pages/ProjectSettingsLayoutPage/Project
 import GeneralSettingsPage from "./pages/GeneralSettingsPage/GeneralSettingsPage";
 import CollaboratorsSettingsPage from "./pages/CollaboratorsSettingsPage/CollaboratorsSettingsPage";
 import InvitePage from "./pages/InvitePage/InvitePage";
+import DashboardLayoutPage from './pages/DashboardLayoutPage/DashboardLayoutPage';
+import { DashboardPage } from "./pages/DashboardPage/DashboardPage";
 
 function App() {
   return (
@@ -19,6 +21,9 @@ function App() {
         <Routes>
           <Route path="/" element={<HomeLayoutPage />}>
             <Route path="" element={<HomePage />} />
+          </Route>
+          <Route path="/dashboard" element={<DashboardLayoutPage/>}>
+            <Route path="" element={<DashboardPage />} />
             <Route path="projects" element={<UserProjectsPage />} />
           </Route>
           <Route

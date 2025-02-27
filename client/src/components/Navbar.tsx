@@ -25,11 +25,11 @@ export const Navbar = ({ isLoginProcessed }: NavbarProps) => {
       <div className="h-[58px] bg-gray-800 flex items-center justify-center px-4 py-1 border-b border-b-gray-600">
         <div className="flex items-center justify-between w-full">
           <div
-            className="h-12 w-16 object-cover -mt-1 cursor-pointer overflow-hidden select-none"
+            className="h-12 aspect-square object-cover -mt-1 cursor-pointer overflow-hidden select-none"
             role="button"
             onClick={() => navigate("/")}
           >
-            <img src="/frospai.png" />
+            <img src="/frospLogo.png" />
           </div>
           <div className="self-center">
             {!isLoginProcessed ? (

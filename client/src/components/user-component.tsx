@@ -65,7 +65,7 @@ export const UserComponent = () => {
 
   const onManageProjectsClick = () => {
     setDropdownOpen(false);
-    navigate("/projects");
+    navigate("/dashboard/projects");
   };
 
   return (
